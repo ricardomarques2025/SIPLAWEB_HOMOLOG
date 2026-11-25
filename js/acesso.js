@@ -353,7 +353,7 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-25.02';
+  var VERSAO_SITE = '2026-11-25.03';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
@@ -363,10 +363,12 @@ var Acesso = (function() {
     ['3.19', '25/11/2026', [
       'DPL: as obras de planejamento passam a ser os 57 trechos estratégicos do relatório "Andamento dos trechos estratégicos" de 24/11/2026 (páginas 2 e 3, 1.912 km), desenhados pela malha estadual (SRE). As 84 obras anteriores da DPL ficam só como backup no banco e não aparecem mais.',
       'Etapa nova "Indicação de Recurso" (trechos sem indicação de recurso): no mapa, no Painel e na página inicial conta como planejamento, com selo próprio e capítulo próprio no caderno. Os trechos em licitação, com licitação finalizada ou com termo aditivo em elaboração ficam na etapa Licitação, todos com status Paralisado; a situação de cada um está nas observações.',
-      'Mapa: saiu o grupo "Exportação" do menu esquerdo (botão "Exportar tabela filtrada"). Para exportar, use o menu Exportar da tabela de obras (Excel, CSV, GeoJSON e cadernos) ou o da tabela de atributos das camadas.'
+      'Mapa: saiu o grupo "Exportação" do menu esquerdo (botão "Exportar tabela filtrada"). Para exportar, use o menu Exportar da tabela de obras (Excel, CSV, GeoJSON e cadernos) ou o da tabela de atributos das camadas.',
+      'Anotações: ferramenta "Linha pela malha" (clique nos segmentos da malha estadual ou complementar; cada clique inclui o segmento inteiro, clicar de novo tira; Enter ou duplo clique conclui) e painel de edição ao clicar numa anotação pronta (nome na legenda, cor, espessura, traço, preenchimento; ponto e texto também). Com uma ferramenta de desenho ativa, o clique em cima de rodovias, obras e outras camadas agora marca o ponto do desenho.'
     ], [
       'A DPL agora mostra os 57 trechos estratégicos de 24/11/2026, com etapa, situação e orçamento de cada um.',
-      'Nova etapa "Indicação de Recurso", para os trechos que ainda esperam recurso; no mapa aparece como planejamento.'
+      'Nova etapa "Indicação de Recurso", para os trechos que ainda esperam recurso; no mapa aparece como planejamento.',
+      'Anotações: desenhe seguindo as rodovias com "Linha pela malha" e mude a cor, a espessura e o traço clicando no desenho pronto.'
     ]],
     ['3.18', '19/11/2026', [
       'Perfil de elevação: no popup de qualquer linha (malha estadual, malha complementar, ferrovias, obras, Jurisdição e camadas editáveis) o botão "Perfil de elevação" abre, embaixo do mapa, o gráfico distância × altitude do trecho clicado, com extensão, altitude mínima e máxima, início e fim, subida e descida totais, rampa média e rampa máxima (com o km). Passando o mouse no gráfico aparecem o km, a altitude e a rampa, e um marcador anda no mapa. "Baixar CSV" leva km, latitude, longitude e altitude.',

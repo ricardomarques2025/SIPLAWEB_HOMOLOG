@@ -808,7 +808,8 @@ map.addControl(new LogoMapaControl());
       ponto: 'drawPonto',
       retangulo: 'drawRetangulo',
       circulo: 'drawCirculo',
-      texto: 'drawTexto'
+      texto: 'drawTexto',
+      malha: 'drawMalha'
     };
     Object.keys(ids).forEach(function(chave) {
       var botao = document.getElementById(ids[chave]);
@@ -1269,33 +1270,14 @@ map.addControl(new LogoMapaControl());
     layer._anotacaoExtra = extra || {};
     if (tipo === 'texto') {
       layer.on('dragend', salvarAnotacoesLocal);
-      layer.on('click', function() {
-        var textoAtual = layer._anotacaoExtra.texto || '';
-        var novoTexto = window.prompt('Texto da anotação:', textoAtual);
-        if (novoTexto === null) return;
-        novoTexto = novoTexto.trim();
-        if (!novoTexto) {
-          removerAnotacao(layer);
-          return;
-        }
-        layer._anotacaoExtra.texto = novoTexto;
-        layer.setIcon(criarIconeTextoAnotacao(novoTexto, estiloTextoPorProps(layer._anotacaoExtra)));
-        salvarAnotacoesLocal();
-      });
+      layer.on('click', cliqueEditarAnotacao(layer));
     } else if (tipo === 'medicao') {
       sincronizarMarcadorMedicaoAnotacao(layer);
       layer.on('click', function() {
         editarMedicaoAnotacao(layer);
       });
     } else {
-      layer.on('click', function() {
-        if (anotacaoFerramenta) return;
-        var nomeAtual = layer._anotacaoExtra.nomeLegenda || '';
-        var novoNome = solicitarNomeLegendaAnotacao(tipo, nomeAtual);
-        layer._anotacaoExtra.nomeLegenda = novoNome;
-        salvarAnotacoesLocal();
-        if (window.confirm('Remover esta anotação?')) removerAnotacao(layer);
-      });
+      layer.on('click', cliqueEditarAnotacao(layer));
     }
     sincronizarMedicoesFormaAnotacao(layer);
     return layer;
@@ -1364,13 +1346,15 @@ map.addControl(new LogoMapaControl());
 
     if (tipo === 'linha' || tipo === 'medicao') {
       props.estilo = estiloFormaDaCamada(layer);
+      var pontosLinha = layer.getLatLngs();
+      // Linha pela malha pode ter partes separadas (MultiLineString).
+      var variasPartes = pontosLinha.length && Array.isArray(pontosLinha[0]);
       return {
         type: 'Feature',
         properties: props,
-        geometry: {
-          type: 'LineString',
-          coordinates: latLngsParaCoords(layer.getLatLngs())
-        }
+        geometry: variasPartes ?
+          { type: 'MultiLineString', coordinates: pontosLinha.map(latLngsParaCoords) } :
+          { type: 'LineString', coordinates: latLngsParaCoords(pontosLinha) }
       };
     }
 
@@ -1453,6 +1437,8 @@ map.addControl(new LogoMapaControl());
 
     if (tipo === 'linha' && geom.type === 'LineString') {
       layer = L.polyline(coordsParaLatLngs(geom.coordinates), estiloForma);
+    } else if (tipo === 'linha' && geom.type === 'MultiLineString') {
+      layer = L.polyline(geom.coordinates.map(coordsParaLatLngs), estiloForma);
     } else if (tipo === 'medicao' && geom.type === 'LineString') {
       layer = L.polyline(coordsParaLatLngs(geom.coordinates), Object.assign({}, estiloForma, {
         dashArray: estiloForma.dashArray || '8,6'
@@ -1698,6 +1684,7 @@ map.addControl(new LogoMapaControl());
   function ativarFerramentaAnotacao(tipo) {
     var ferramentaAnterior = anotacaoFerramenta;
     limparPreviewAnotacao();
+    if (ferramentaAnterior === 'malha') limparMalha();
     anotacaoMedicaoFormaModo = tipo === 'medicao' && ['linha', 'poligono', 'ponto', 'retangulo', 'circulo'].indexOf(ferramentaAnterior) !== -1 ?
       ferramentaAnterior :
       null;
@@ -1746,6 +1733,10 @@ map.addControl(new LogoMapaControl());
     }
     if (tipo === 'texto') {
       setStatusAnotacao('Texto: clique no local, mova para escolher a rotação e clique para digitar');
+      return;
+    }
+    if (tipo === 'malha') {
+      desenharSelecaoMalha();
       return;
     }
   }
@@ -1987,6 +1978,271 @@ map.addControl(new LogoMapaControl());
     }
   }
 
+  // ---------- Linha pela malha (VER. 3.19, 25/11/2026) ----------
+  // Clique nos segmentos da malha estadual (SRE) e da malha complementar: cada clique acrescenta o segmento inteiro,
+  // clicar de novo tira. Enter ou duplo clique conclui (vira uma anotação de linha comum); Esc cancela.
+  var malhaSelecao = [];
+  var malhaCamadaSelecao = null;
+  var malhaCamadaHover = null;
+  var malhaIndice = null;
+  var malhaHoverPendente = null;
+  var MALHA_TOLERANCIA_PX = 10;
+
+  function linhasDaGeometriaMalha(g) {
+    if (!g) return [];
+    if (g.type === 'LineString') return [coordsParaLatLngs(g.coordinates)];
+    if (g.type === 'MultiLineString') return g.coordinates.map(coordsParaLatLngs);
+    return [];
+  }
+
+  function indiceMalha() {
+    if (malhaIndice && malhaIndice.sre === sreBaseData && malhaIndice.extra === extraBaseData) return malhaIndice.itens;
+    var itens = [];
+    function incluir(fc, fonte) {
+      if (!fc || !fc.features) return;
+      fc.features.forEach(function(f) {
+        var p = f.properties || {};
+        var linhas = linhasDaGeometriaMalha(f.geometry);
+        if (!linhas.length) return;
+        var codigo = p.GEOCOD || p.sre || p.SRE || '';
+        var km = Number(fonte === 'sre' ? p.ext : p.EXT_KM);
+        itens.push({
+          chave: fonte + ':' + codigo, fonte: fonte, codigo: codigo, rodovia: p.rodovia || '',
+          trecho: p.trecho || '', km: isFinite(km) ? km : 0, linhas: linhas,
+          limites: L.latLngBounds([].concat.apply([], linhas))
+        });
+      });
+    }
+    incluir(sreBaseData, 'sre');
+    incluir(extraBaseData, 'extra');
+    malhaIndice = { sre: sreBaseData, extra: extraBaseData, itens: itens };
+    return itens;
+  }
+
+  // Segmento mais perto do ponto (até 10 px). Empate: o da SRE (vem antes na lista).
+  function segmentoMalhaNoPonto(latlng) {
+    var p = map.latLngToLayerPoint(latlng);
+    var canto = map.layerPointToLatLng(p.add([MALHA_TOLERANCIA_PX, MALHA_TOLERANCIA_PX]));
+    var dLat = Math.abs(canto.lat - latlng.lat), dLng = Math.abs(canto.lng - latlng.lng);
+    var area = L.latLngBounds([latlng.lat - dLat, latlng.lng - dLng], [latlng.lat + dLat, latlng.lng + dLng]);
+    var melhor = null, melhorDist = MALHA_TOLERANCIA_PX;
+    indiceMalha().forEach(function(it) {
+      if (!it.limites.intersects(area)) return;
+      it.linhas.forEach(function(linha) {
+        var anterior = null;
+        for (var i = 0; i < linha.length; i++) {
+          var atual = map.latLngToLayerPoint(linha[i]);
+          if (anterior) {
+            var d = L.LineUtil.pointToSegmentDistance(p, anterior, atual);
+            if (d < melhorDist) { melhorDist = d; melhor = it; }
+          }
+          anterior = atual;
+        }
+      });
+    });
+    return melhor;
+  }
+
+  function formatarKmMalha(km) {
+    return (Number(km) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' km';
+  }
+
+  function posicaoNaSelecaoMalha(it) {
+    for (var i = 0; i < malhaSelecao.length; i++) if (malhaSelecao[i].chave === it.chave) return i;
+    return -1;
+  }
+
+  function desenharSelecaoMalha() {
+    if (!malhaCamadaSelecao) malhaCamadaSelecao = L.layerGroup().addTo(map);
+    malhaCamadaSelecao.clearLayers();
+    var estilo = lerEstiloFormaAnotacao();
+    malhaSelecao.forEach(function(it) {
+      L.polyline(it.linhas, { pane: 'anotacoesPane', color: estilo.color, weight: estilo.weight + 2, opacity: 0.9, interactive: false }).addTo(malhaCamadaSelecao);
+    });
+    var km = malhaSelecao.reduce(function(s, it) { return s + it.km; }, 0);
+    setStatusAnotacao(malhaSelecao.length ?
+      'Linha pela malha: ' + malhaSelecao.length + ' segmento(s), ' + formatarKmMalha(km) + '. Enter ou duplo clique conclui; Esc cancela.' :
+      'Linha pela malha: clique nos segmentos da malha estadual ou complementar (clicar de novo tira). Esc cancela.');
+  }
+
+  function mostrarHoverMalha(latlng) {
+    if (!malhaCamadaHover) malhaCamadaHover = L.layerGroup().addTo(map);
+    malhaCamadaHover.clearLayers();
+    var it = latlng && segmentoMalhaNoPonto(latlng);
+    map.getContainer().classList.toggle('malha-sobre-segmento', !!it);
+    if (!it) return;
+    var escolhido = posicaoNaSelecaoMalha(it) >= 0;
+    L.polyline(it.linhas, { pane: 'anotacoesPane', color: '#f59e0b', weight: 9, opacity: 0.5, interactive: false }).addTo(malhaCamadaHover);
+    L.tooltip({ direction: 'top', offset: [0, -10], className: 'malha-tooltip' })
+      .setLatLng(latlng)
+      .setContent('<b>' + escaparHtml(it.codigo) + '</b> · ' + escaparHtml(it.rodovia) + ' · ' + formatarKmMalha(it.km) +
+        (it.trecho ? '<br>' + escaparHtml(it.trecho) : '') + '<br><i>' + (escolhido ? 'clique para tirar' : 'clique para incluir') + '</i>')
+      .addTo(malhaCamadaHover);
+  }
+
+  function agendarHoverMalha(latlng) {
+    var agendado = malhaHoverPendente;
+    malhaHoverPendente = latlng;
+    if (agendado) return;
+    window.requestAnimationFrame(function() {
+      var alvo = malhaHoverPendente;
+      malhaHoverPendente = null;
+      if (anotacaoFerramenta === 'malha') mostrarHoverMalha(alvo);
+    });
+  }
+
+  function cliqueMalha(latlng) {
+    var it = segmentoMalhaNoPonto(latlng);
+    if (!it) {
+      setStatusAnotacao('Linha pela malha: nenhum segmento perto do clique. Clique em cima da rodovia (se preciso, aproxime o zoom).');
+      return;
+    }
+    var i = posicaoNaSelecaoMalha(it);
+    if (i >= 0) malhaSelecao.splice(i, 1); else malhaSelecao.push(it);
+    desenharSelecaoMalha();
+    mostrarHoverMalha(latlng);
+  }
+
+  function limparMalha() {
+    malhaSelecao = [];
+    malhaHoverPendente = null;
+    if (malhaCamadaSelecao) malhaCamadaSelecao.clearLayers();
+    if (malhaCamadaHover) malhaCamadaHover.clearLayers();
+    map.getContainer().classList.remove('malha-sobre-segmento');
+  }
+
+  function concluirMalha() {
+    if (!malhaSelecao.length) return;
+    var linhas = [], rodovias = [], codigos = [], km = 0;
+    malhaSelecao.forEach(function(it) {
+      linhas = linhas.concat(it.linhas);
+      if (it.rodovia && rodovias.indexOf(it.rodovia) < 0) rodovias.push(it.rodovia);
+      codigos.push(it.codigo);
+      km += it.km;
+    });
+    var estilo = lerEstiloFormaAnotacao();
+    var nome = solicitarNomeLegendaAnotacao('linha', (rodovias.join(', ') || 'Malha') + ' (' + formatarKmMalha(km) + ')');
+    limparMalha();
+    adicionarAnotacao(L.polyline(linhas.length === 1 ? linhas[0] : linhas, estilo), 'linha', {
+      estilo: estiloFormaDaCamada({ options: estilo }),
+      nomeLegenda: nome,
+      malha: codigos,
+      km_malha: Math.round(km * 1000) / 1000
+    });
+    ativarFerramentaAnotacao('malha');   // desliga a ferramenta, como nas outras
+  }
+
+  // ---------- Editar anotação pronta (VER. 3.19): nome, cor, espessura, traço, preenchimento, ponto e texto ----------
+  var TRACOS_ANOTACAO = [['', 'Cheio'], ['10,8', 'Tracejado'], ['2,7', 'Pontilhado'], ['14,6,2,6', 'Traço e ponto']];
+
+  function abrirEditorAnotacao(layer, latlng) {
+    var tipo = layer._anotacaoTipo;
+    var ex = layer._anotacaoExtra || (layer._anotacaoExtra = {});
+    var forma = ['linha', 'poligono', 'retangulo', 'circulo'].indexOf(tipo) >= 0;
+    var div = L.DomUtil.create('div', 'anotacao-editor');
+    var h = '<div class="anotacao-editor-titulo">' + escaparHtml(nomeTipoAnotacao(tipo)) + (ex.malha ? ' pela malha' : '') + '</div>';
+    if (tipo === 'texto') h += '<label>Texto<input type="text" data-c="texto"></label>';
+    else h += '<label>Nome na legenda<input type="text" data-c="nome" placeholder="(sem legenda)"></label>';
+    if (forma) {
+      h += '<label class="anotacao-editor-linha">Cor<input type="color" data-c="cor"></label>' +
+        '<label>Espessura: <span data-v="esp"></span><input type="range" min="1" max="12" step="1" data-c="esp"></label>' +
+        '<label>Traço<select data-c="traco">' + TRACOS_ANOTACAO.map(function(t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('') + '</select></label>';
+      if (tipo !== 'linha') h += '<label>Preenchimento: <span data-v="pre"></span><input type="range" min="0" max="100" step="1" data-c="pre"></label>';
+    } else if (tipo === 'ponto') {
+      h += '<label class="anotacao-editor-linha">Cor<input type="color" data-c="cor"></label>' +
+        '<label>Formato<select data-c="formato"><option value="circulo">Círculo</option><option value="quadrado">Quadrado</option>' +
+        '<option value="losango">Losango</option><option value="triangulo">Triângulo</option></select></label>' +
+        '<label>Tamanho: <span data-v="tam"></span><input type="range" min="6" max="34" step="1" data-c="tam"></label>';
+    } else if (tipo === 'texto') {
+      h += '<label class="anotacao-editor-linha">Cor<input type="color" data-c="cor"></label>' +
+        '<label>Tamanho: <span data-v="tam"></span><input type="range" min="8" max="36" step="1" data-c="tam"></label>';
+    }
+    if (ex.malha) {
+      h += '<div class="anotacao-editor-info">' + ex.malha.length + ' segmento(s) · ' + formatarKmMalha(ex.km_malha) +
+        '<br><small>' + escaparHtml(ex.malha.join(', ')) + '</small></div>';
+    }
+    h += '<div class="anotacao-editor-botoes"><button type="button" data-acao="excluir" class="anotacao-editor-excluir">Excluir</button>' +
+      '<button type="button" data-acao="fechar">Fechar</button></div>';
+    div.innerHTML = h;
+    function campo(c) { return div.querySelector('[data-c="' + c + '"]'); }
+    function mostrar(v, texto) { var s = div.querySelector('[data-v="' + v + '"]'); if (s) s.textContent = texto; }
+    function hexCor(c) { return /^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : '#e11d48'; }
+
+    // Valores atuais
+    if (campo('nome')) campo('nome').value = ex.nomeLegenda || '';
+    if (forma) {
+      var st = estiloFormaDaCamada(layer);
+      campo('cor').value = hexCor(st.color);
+      campo('esp').value = st.weight;
+      campo('traco').value = TRACOS_ANOTACAO.some(function(t) { return t[0] === (st.dashArray || ''); }) ? (st.dashArray || '') : '';
+      if (campo('pre')) campo('pre').value = Math.round((st.fillOpacity || 0) * 100);
+    } else if (tipo === 'ponto') {
+      var sf = estiloFormaPorProps(ex), sp = estiloPontoPorProps(ex);
+      campo('cor').value = hexCor(sf.color);
+      campo('formato').value = sp.formato;
+      campo('tam').value = sp.tamanho;
+    } else if (tipo === 'texto') {
+      var stx = estiloTextoPorProps(ex);
+      campo('texto').value = ex.texto || '';
+      campo('cor').value = hexCor(stx.cor);
+      campo('tam').value = stx.tamanho;
+    }
+
+    function rotulos() {
+      if (campo('esp')) mostrar('esp', campo('esp').value + ' px');
+      if (campo('pre')) mostrar('pre', campo('pre').value + '%');
+      if (campo('tam')) mostrar('tam', campo('tam').value + ' px');
+    }
+    function aplicar() {
+      rotulos();
+      if (campo('nome')) {
+        ex.nomeLegenda = campo('nome').value.trim();
+        if (ex.nomeLegenda && !legendaAnotacoesAtiva) { legendaAnotacoesAtiva = true; atualizarBotaoLegendaAnotacoes(); }
+      }
+      if (forma) {
+        var novo = { color: campo('cor').value, fillColor: campo('cor').value, weight: Number(campo('esp').value), dashArray: campo('traco').value || null };
+        if (campo('pre')) novo.fillOpacity = Number(campo('pre').value) / 100;
+        layer.setStyle(novo);
+        ex.estilo = estiloFormaDaCamada(layer);
+        if (ex.medirForma) sincronizarMedicoesFormaAnotacao(layer);
+      } else if (tipo === 'ponto') {
+        ex.estilo = Object.assign({}, ex.estilo, { color: campo('cor').value, fillColor: campo('cor').value });
+        ex.estiloPonto = Object.assign({}, ex.estiloPonto, { formato: campo('formato').value, tamanho: Number(campo('tam').value) });
+        layer.setIcon(ex.rotuloKm ?
+          criarIconeKmRodoviaAnotacao(ex.rotuloKm, estiloFormaPorProps(ex), estiloPontoPorProps(ex), estiloTextoPorProps(ex), layer.getLatLng()) :
+          criarIconePontoAnotacao(estiloFormaPorProps(ex), estiloPontoPorProps(ex)));
+      } else if (tipo === 'texto') {
+        var texto = campo('texto').value.trim();
+        if (texto) ex.texto = texto;
+        ex.estiloTexto = Object.assign({}, ex.estiloTexto, { cor: campo('cor').value, tamanho: Number(campo('tam').value) });
+        layer.setIcon(criarIconeTextoAnotacao(ex.texto || '', estiloTextoPorProps(ex)));
+      }
+      salvarAnotacoesLocal();
+    }
+    rotulos();
+    div.addEventListener('input', aplicar);
+    div.addEventListener('change', aplicar);
+    div.addEventListener('click', function(ev) {
+      var acao = ev.target && ev.target.getAttribute('data-acao');
+      if (acao === 'fechar') map.closePopup();
+      if (acao === 'excluir' && window.confirm('Excluir esta anotação?')) { map.closePopup(); removerAnotacao(layer); }
+    });
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    L.popup({ className: 'anotacao-editor-popup', minWidth: 220, maxWidth: 250, autoPanPaddingTopLeft: [20, 70], autoPanPaddingBottomRight: [20, 20] })
+      .setLatLng(latlng)
+      .setContent(div)
+      .openOn(map);
+  }
+
+  function cliqueEditarAnotacao(layer) {
+    return function(e) {
+      if (anotacaoFerramenta) return;
+      if (e) L.DomEvent.stop(e);
+      abrirEditorAnotacao(layer, (e && e.latlng) || (layer.getLatLng ? layer.getLatLng() : layer.getBounds().getCenter()));
+    };
+  }
+
   function exportarArquivoAnotacoes() {
     var data = new Date().toISOString().slice(0, 10);
     var nomePadrao = 'anotacoes_mapa_pop2_' + data;
@@ -2009,16 +2265,37 @@ map.addControl(new LogoMapaControl());
   }
 
   function inicializarAnotacoes() {
-    map.on('click', processarCliqueAnotacao);
     map.on('mousemove', processarMousemoveAnotacao);
-    map.on('dblclick', function(e) {
-      if (anotacaoFerramenta === 'linha' || anotacaoFerramenta === 'poligono' || anotacaoFerramenta === 'medicao') {
-        if (e.originalEvent) {
-          L.DomEvent.preventDefault(e.originalEvent);
-          L.DomEvent.stopPropagation(e.originalEvent);
-        }
-        finalizarLinhaAnotacao();
-      }
+    // Cliques do desenho capturados no contêiner ANTES das camadas (VER. 3.19): antes, clicar em cima de uma rodovia,
+    // obra ou outra camada clicável não marcava o ponto, porque a camada ficava com o clique. Mesmo jeito da ferramenta Perfil.
+    var conteinerMapa = map.getContainer();
+    function foraDoDesenho(ev) {
+      return !!(ev.target && ev.target.closest && ev.target.closest('.leaflet-control, .leaflet-popup, .perfil-elev'));
+    }
+    conteinerMapa.addEventListener('click', function(ev) {
+      if (!anotacaoFerramenta || foraDoDesenho(ev)) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (ev.detail >= 2) return;   // segundo clique do duplo clique: quem conclui é o dblclick
+      var latlng = map.mouseEventToLatLng(ev);
+      if (anotacaoFerramenta === 'malha') cliqueMalha(latlng);
+      else processarCliqueAnotacao({ latlng: latlng });
+    }, true);
+    conteinerMapa.addEventListener('dblclick', function(ev) {
+      if (!anotacaoFerramenta || foraDoDesenho(ev)) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (anotacaoFerramenta === 'malha') concluirMalha();
+      else if (anotacaoFerramenta === 'linha' || anotacaoFerramenta === 'poligono' || anotacaoFerramenta === 'medicao') finalizarLinhaAnotacao();
+    }, true);
+    conteinerMapa.addEventListener('mousemove', function(ev) {
+      if (anotacaoFerramenta === 'malha' && !foraDoDesenho(ev)) agendarHoverMalha(map.mouseEventToLatLng(ev));
+    }, true);
+    document.addEventListener('keydown', function(ev) {
+      if (anotacaoFerramenta !== 'malha') return;
+      if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+      if (ev.key === 'Enter') { ev.preventDefault(); concluirMalha(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); ativarFerramentaAnotacao('malha'); }
     });
     map.getContainer().addEventListener('contextmenu', function(e) {
       if (!anotacaoFerramenta) return;
@@ -2034,7 +2311,8 @@ map.addControl(new LogoMapaControl());
       ['drawPonto', 'ponto'],
       ['drawRetangulo', 'retangulo'],
       ['drawCirculo', 'circulo'],
-      ['drawTexto', 'texto']
+      ['drawTexto', 'texto'],
+      ['drawMalha', 'malha']
     ];
     botoes.forEach(function(item) {
       var botao = document.getElementById(item[0]);
