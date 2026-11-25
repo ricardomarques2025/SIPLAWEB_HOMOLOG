@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%231e9538%27/%3E%3Ctext x=%2712%27 y=%2717.5%27 text-anchor=%27middle%27 font-family=%27Arial%27 font-weight=%27700%27 font-size=%2715%27 fill=%27white%27%3E%3F%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="css/ajuda.css?v=2026-11-25.01" />
+  <link rel="stylesheet" href="css/ajuda.css?v=2026-11-25.02" />
 </head>
 <body>
 <header class="aj-topo">
@@ -145,13 +145,13 @@
   <h1>Conhecendo a tela do mapa</h1>
   <div class="aj-esquema" aria-hidden="true">
     <div class="e-topo">Barra superior</div>
-    <div class="e-esq">Menu esquerdo<small>origem, filtros, camadas, anotações, impressão, exportação</small></div>
+    <div class="e-esq">Menu esquerdo<small>origem, filtros, camadas, anotações, impressão</small></div>
     <div class="e-mapa">Mapa<small>zoom, régua, clique para consultar</small></div>
     <div class="e-dir">Legenda</div>
     <div class="e-baixo">Detalhes da seleção</div>
   </div>
   <ul>
-    <li><b>Menu esquerdo</b>: cada grupo (ORIGEM, Filtros, Camadas de referência, Anotações, Impressão / PDF, Exportação) abre e fecha ao clicar no título.</li>
+    <li><b>Menu esquerdo</b>: cada grupo (ORIGEM, Filtros, Camadas de referência, Anotações, Impressão / PDF) abre e fecha ao clicar no título.</li>
     <li><b>Legenda (direita)</b>: muda conforme o que está visível. Veja <a href="#mapa-legenda">Legenda</a>.</li>
     <li><b>Detalhes da seleção (embaixo)</b>: clique no título para abrir ou fechar; arraste a borda de cima para mudar a altura.</li>
     <li>Os botões <b>«</b> e <b>»</b> recolhem os painéis laterais para ganhar espaço.</li>
@@ -385,10 +385,10 @@
   </ol>
 </article>
 
-<article id="ferramentas-exportar" data-cat="Ferramentas do mapa" data-titulo="Exportar a tabela filtrada (CSV)" data-termos="exportar CSV planilha excel tabela filtrada download baixar" data-rel="obras-tabela jurisdicao-exportar">
-  <h1>Exportar a tabela filtrada (CSV)</h1>
-  <p>No grupo <b>Exportação</b> do menu esquerdo, <b>Exportar tabela filtrada</b> baixa um CSV com as obras visíveis (lineares, pontuais e vinculadas a aeródromos) conforme os filtros ativos. quem exporta (diretor, editores, gerenciador).</p>
-  <p>Para a planilha completa de uma origem, use o menu <b>Exportar</b> da <a href="#obras-tabela">tabela de obras</a>. Para a Jurisdição, veja <a href="#jurisdicao-exportar">Exportar dados da Jurisdição</a>.</p>
+<article id="ferramentas-exportar" data-cat="Ferramentas do mapa" data-titulo="Exportar dados (Excel, CSV, GeoJSON)" data-termos="exportar CSV planilha excel tabela filtrada download baixar" data-rel="obras-tabela jurisdicao-exportar">
+  <h1>Exportar dados (Excel, CSV, GeoJSON)</h1>
+  <p>A exportação é feita pelas tabelas, para quem exporta (diretor, editores, gerenciador). Obras: menu <b>Exportar</b> da <a href="#obras-tabela">tabela de obras</a> (Excel com todas ou só as filtradas, CSV, GeoJSON e cadernos). Jurisdição: <a href="#jurisdicao-exportar">Exportar dados da Jurisdição</a>. Camadas de referência: botão <b>Exportar</b> da tabela de atributos da camada.</p>
+  <p>O antigo botão "Exportar tabela filtrada" do menu esquerdo do mapa saiu na VER. 3.19.</p>
 </article>
 
 <!-- ================================================================ OBRAS -->
@@ -812,7 +812,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="js/acesso.js?v=2026-11-25.01"></script>
-<script src="js/ajuda.js?v=2026-11-25.01"></script>
+<script src="js/acesso.js?v=2026-11-25.02"></script>
+<script src="js/ajuda.js?v=2026-11-25.02"></script>
 </body>
 </html>
