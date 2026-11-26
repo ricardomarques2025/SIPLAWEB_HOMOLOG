@@ -296,6 +296,27 @@ var ObrasStore = (function() {
       return carregarPropostas();
     });
   }
+  // Aprovação/recusa em lote (26/11/2026): uma proposta por vez (o banco confere a permissão de cada uma) e as obras e
+  // propostas recarregadas uma vez só no fim. Proposta em conflito (obra alterada depois dela) não é forçada: volta em
+  // "falhas" para ser decidida uma a uma. acao: 'aprovar' | 'recusar'; aoAndar(feitas, total) mostra o progresso.
+  function decidirVarios(acao, pids, motivo, aoAndar) {
+    var ok = [], falhas = [], uids = [];
+    return pids.reduce(function(fila, pid, i) {
+      return fila.then(function() {
+        var chamada = acao === 'aprovar' ? sb.rpc('aprovar_proposta', { p_pid: pid, p_forcar: false })
+          : sb.rpc('recusar_proposta', { p_pid: pid, p_motivo: motivo });
+        return chamada.then(function(res) {
+          if (res.error) falhas.push({ pid: pid, motivo: erro(res.error).message });
+          else { ok.push(pid); if (acao === 'aprovar' && res.data) uids.push(res.data); }
+        }, function(e) { falhas.push({ pid: pid, motivo: e.message }); }).then(function() { if (aoAndar) aoAndar(i + 1, pids.length); });
+      });
+    }, Promise.resolve()).then(function() {
+      return Promise.all(uids.map(function(u) { return recarregarObra(u).catch(function() { return null; }); }));
+    }).then(function() { return carregarPropostas(); }).then(function() {
+      if (ok.length) emitir('salvo');
+      return { ok: ok, falhas: falhas };
+    });
+  }
   function cancelar(pid) {
     return sb.rpc('cancelar_proposta', { p_pid: pid }).then(function(res) {
       if (res.error) throw erro(res.error);
@@ -340,7 +361,7 @@ var ObrasStore = (function() {
     podeDecidir: podeDecidir,
     modoProposta: modoProposta,
     propostas: function() { return propostas; }, propostaPendente: propostaPendente, carregarPropostas: carregarPropostas,
-    aprovar: aprovar, recusar: recusar, cancelar: cancelar,
+    aprovar: aprovar, recusar: recusar, cancelar: cancelar, decidirVarios: decidirVarios,
     definirPendente: definirPendente, pendente: pendente, valorAtual: valorAtual,
     totalPendentes: totalPendentes, descartar: descartar, resumoPendentes: resumoPendentes, salvar: salvar,
     criar: criar, excluir: excluir, tramitarOrigem: tramitarOrigem, anotar: anotar,

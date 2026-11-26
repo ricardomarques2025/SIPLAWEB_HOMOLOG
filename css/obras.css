@@ -99,3 +99,20 @@
 .obr-ui .obr-filtrar-mapa.ativo .obr-chave { background: #1e9538; }
 .obr-ui .obr-filtrar-mapa.ativo .obr-chave::after { left: 14px; }
 #sidebar-left .obr-abrir-tabela.mapa-filtrado::after { content: 'Mapa filtrado pela tabela'; display: block; margin-top: 3px; font-size: 11px; font-weight: 600; opacity: .9; }
+
+/* Seleção de obras, caderno do recorte e edição em lote (26/11/2026) */
+.obr-ui .col-marca input, .obr-ui .obr-marca-todas { width: 15px; height: 15px; margin: 0; cursor: pointer; accent-color: #1e9538; }
+.obr-ui .tabulator-col.col-marca .tabulator-col-content { display: flex; justify-content: center; padding: 6px 0; }
+.obr-ui .obr-selecao.tem-selecao { border-color: #1e9538; color: #14652a; }
+.obr-ui .obr-selecao.tem-selecao .obr-contagem { background: #1e9538; color: #fff; }
+.obr-ui .obr-selecao.ativo { background: #f0fdf4; }
+.obr-ui #obrDlgLote .chk.largo { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.obr-ui #obrLoteValor select, .obr-ui #obrLoteValor input, .obr-ui #obrLoteValor textarea { width: 100%; }
+/* Aprovação em lote */
+.obr-ui .aprov-lote { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--linha, #e2e8f0); border-radius: var(--raio, 8px); background: #f8fafc; }
+.obr-ui .aprov-lote .chk { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600; }
+.obr-ui .aprov-lote-n { font-size: 12px; color: var(--texto-2); }
+.obr-ui .aprov-lote-recusa { margin: -4px 0 10px; }
+.obr-ui .aprov-lote-resultado { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: #fffbeb; color: #92400e; font-size: 12.5px; }
+.obr-ui .aprov-lote-resultado ul { margin: 4px 0 0 18px; padding: 0; }
+.obr-ui .aprov-marca { width: 16px; height: 16px; margin: 0 8px 0 0; vertical-align: -3px; cursor: pointer; accent-color: #1e9538; }

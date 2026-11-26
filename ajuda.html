@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%231e9538%27/%3E%3Ctext x=%2712%27 y=%2717.5%27 text-anchor=%27middle%27 font-family=%27Arial%27 font-weight=%27700%27 font-size=%2715%27 fill=%27white%27%3E%3F%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="css/ajuda.css?v=2026-11-26.03" />
+  <link rel="stylesheet" href="css/ajuda.css?v=2026-11-26.04" />
 </head>
 <body>
 <header class="aj-topo">
@@ -416,11 +416,21 @@
         <li><b>CSV</b>: todas as obras da origem (separador ponto e vírgula).</li>
         <li><b>GeoJSON com atributos (QGIS)</b>: todas as obras com o traçado (linha, ponto ou área) e os campos, para abrir em SIG. Obra sem traçado sai só com os campos.</li>
         <li><b>Caderno completo (PDF)</b>: planilhas e um mapa por obra, no formato dos cadernos da GOINFRA. Veja <a href="#obras-caderno">Caderno de obras</a>.</li>
+        <li><b>Caderno das obras filtradas (PDF)</b>: o mesmo caderno, só com as obras que passam na busca e nos filtros das colunas, numeradas 1, 2, 3…</li>
         <li><b>Mapa A4 da obra selecionada (PDF)</b>: clique antes na linha da obra.</li>
         <li><b>Histórico de alterações (período)…</b>: escolha as datas (ou 7 dias, 30 dias, este mês, este ano) e se entram todos os registros ou só os filtrados. Sai uma planilha com uma linha por campo alterado: data e hora, código, descrição, ação (cadastro, edição, traçado, exclusão), campo, valor antes e depois, autor e, se veio de proposta, quem propôs. Aparece para quem edita ou aprova (editor básico, editor pleno, gerenciador, administrador); o visualizador e o diretor não veem.</li>
       </ul>
     </li>
     <li>O ícone de alfinete na linha <b>mostra a obra no mapa</b>; o ícone de painel abre a <a href="#obras-ficha">ficha</a>.</li>
+    <li><b>Selecionar obras</b>: marque a caixa da <b>primeira coluna</b>. <b>Shift + clique</b> marca um intervalo; a caixa do título marca ou desmarca todas as obras que estão na tabela (com a busca e os filtros). O botão <b>Seleção</b> mostra quantas estão marcadas e oferece:
+      <ul>
+        <li><b>Mostrar só as selecionadas</b> (clique de novo para ver todas);</li>
+        <li><b>Só as selecionadas, também no mapa</b> (liga o <b>Filtrar o mapa</b>);</li>
+        <li><b>Caderno das selecionadas (PDF)</b>, numeradas 1, 2, 3…;</li>
+        <li><b>Editar em lote…</b> (quem edita; veja <a href="#obras-editar">Editar obras</a>);</li>
+        <li><b>Limpar seleção</b>.</li>
+      </ul>
+      A seleção vale enquanto a página estiver aberta; não fica guardada e zera ao trocar a origem da tabela.</li>
     <li>O <b>✕</b> fecha a tabela e volta ao mapa.</li>
   </ul>
   <div class="aj-nota">Na tela, cada registro é chamado de <b>empreendimento</b> e tem um código permanente <code>OB26-00001</code>, que não muda nem quando a obra tramita de origem.</div>
@@ -438,6 +448,8 @@
     <li>Clique em <b>Confirmar e salvar</b> (ou <b>Enviar para aprovação</b>). Para desistir, <b>Voltar e corrigir</b> ou <b>Descartar</b>.</li>
   </ol>
   <p>O banco confere as regras antes de gravar: SEI com 15 dígitos, valores de lista válidos, data não futura, traçado dentro de Goiás.</p>
+  <h2>Editar em lote</h2>
+  <p>Para pôr o <b>mesmo valor</b> num campo de várias obras: marque as obras na primeira coluna (veja <a href="#obras-tabela">Tabela de obras</a>), clique em <b>Seleção › Editar em lote…</b>, escolha o <b>campo</b> e o <b>valor novo</b> (ou marque <b>Deixar o campo vazio</b>) e clique em <b>Aplicar</b>. Um campo por vez; código, origem e traçado não entram. O valor fica pendente (destacado) nas obras, como na edição célula a célula: confira e grave em <b>Revisar e salvar</b> (editor: <b>Revisar e enviar</b>, uma proposta por obra).</p>
   <h2>Obra nova</h2>
   <p>Clique em <b>Nova obra</b>, preencha os dados e <b>Cadastrar</b>. O código <code>OB26-…</code> é gerado pelo banco e a ficha abre na aba <a href="#obras-tracado">Traçado</a> para você definir onde a obra fica. Do editor básico, a obra nova vai para aprovação e o código só sai quando aprovada.</p>
   <div class="aj-nota aj-atencao"><b>Edição simultânea:</b> se outra pessoa gravou a mesma obra antes de você, sua gravação é recusada e o registro é recarregado. Refaça a alteração sobre a versão nova.</div>
@@ -463,7 +475,7 @@
   <p>Monta o caderno no formato do <i>Caderno de Obras Rodoviárias</i> e do <i>Caderno de Projetos Rodoviários</i> da GOINFRA, com os dados do sistema. Como o da Jurisdição, <b>não fica gravado</b>: você salva o PDF pelo diálogo de impressão. Só para quem exporta na origem.</p>
   <h2>Caderno completo</h2>
   <ol>
-    <li>Na <a href="#obras-tabela">tabela de obras</a>, clique em <b>Exportar › Caderno completo (PDF)</b>. Abre uma aba nova com a origem da tabela marcada.</li>
+    <li>Na <a href="#obras-tabela">tabela de obras</a>, clique em <b>Exportar › Caderno completo (PDF)</b>. Abre uma aba nova com a origem da tabela marcada. Para um caderno só com parte das obras, use <b>Exportar › Caderno das obras filtradas</b> ou <b>Seleção › Caderno das selecionadas</b>: o caderno mostra quantas obras entram e as numera 1, 2, 3… (as outras origens ficam travadas).</li>
     <li>Marque as <b>origens</b> que entram no caderno. Com mais de uma, a ordem é a ordem em que você marcou (o número aparece ao lado: 1º, 2º…). Exemplo: DOR e depois DPJ.</li>
     <li>Escolha as partes (<b>Capa</b>, <b>Índice</b>, <b>Resumo</b>, <b>Planilhas</b>, <b>Mapas</b>), o <b>Título</b> da capa e o <b>Ano</b>.</li>
     <li>Clique em <b>Gerar caderno</b> e aguarde os mapas (cerca de 1 minuto para DOR + DPJ).</li>
@@ -649,6 +661,8 @@
     <li>Confira o “antes → depois” de cada proposta. Quando ela mexe no <b>traçado</b> (trechos da malha ou desenho), em obra ou registro novo, na exclusão de algo que tem traçado e nas camadas, aparece um <b>mapa</b> no próprio cartão: <b style="color:#ea580c">laranja</b> = o que entra, <b style="color:#15803d">verde</b> = o que já existe e continua, <b style="color:#dc2626">vermelho tracejado</b> = o que sai. Passe o mouse num trecho para ver o código; para dar zoom com a rodinha, clique antes no mapa. Em proposta já decidida, o mapa mostra só o que foi proposto.</li>
     <li><b>Aprovar</b>, ou <b>Recusar</b> escrevendo o motivo (o autor vai ver).</li>
   </ol>
+  <h2>Aprovar ou recusar em lote</h2>
+  <p>Em <b>Aprovações</b> (tabela) e no Painel › <b>Para você aprovar</b>, cada proposta que cabe a você tem uma caixa de marcar; <b>Marcar todas</b> marca todas. Depois clique em <b>Aprovar marcadas</b> ou em <b>Recusar marcadas</b> (um motivo só, que vale para todas). O sistema decide uma por uma, com as mesmas regras da decisão individual. As que estiverem em <b>conflito</b> (registro alterado depois da proposta) ou derem erro <b>ficam pendentes</b> e aparecem num resumo, para você decidir uma a uma.</p>
   <div class="aj-nota aj-atencao">Se o registro mudou depois da proposta, aparece um aviso de <b>conflito</b> antes de aprovar. No histórico, quem aprovou fica como autor, com a nota “proposta de Fulano”.</div>
 </article>
 
@@ -815,7 +829,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="js/acesso.js?v=2026-11-26.03"></script>
-<script src="js/ajuda.js?v=2026-11-26.03"></script>
+<script src="js/acesso.js?v=2026-11-26.04"></script>
+<script src="js/ajuda.js?v=2026-11-26.04"></script>
 </body>
 </html>

@@ -353,13 +353,23 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-26.03';
+  var VERSAO_SITE = '2026-11-26.04';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
   // 4º item (opcional) = BOAS-VINDAS: resumo curto, em linguagem simples (sem termos técnicos), mostrado uma vez por
   // navegador ao entrar no mapa ou no Painel depois de cada versão nova (número novo). Toda versão nova deve ter.
   var NOVIDADES = [
+    ['3.21', '26/11/2026', [
+      'Tabela de obras: seleção de obras pela caixa da primeira coluna (Shift+clique marca um intervalo; a caixa do título marca todas as que estão na tabela). O botão Seleção mostra quantas estão marcadas e oferece: mostrar só as selecionadas, só as selecionadas também no mapa, caderno das selecionadas (PDF), editar em lote e limpar. A seleção vale enquanto a página estiver aberta.',
+      'Caderno só com parte das obras: Exportar › "Caderno das obras filtradas (PDF)" (busca e filtros das colunas) e Seleção › "Caderno das selecionadas". As obras saem numeradas 1, 2, 3…',
+      'Editar em lote: o mesmo valor num campo das obras selecionadas (um campo por vez; código, origem e traçado não entram). Fica pendente como a edição na célula e passa por "Revisar e salvar/enviar" (do editor, uma proposta por obra).',
+      'Aprovar ou recusar em lote: caixas de marcar nas propostas que cabem a você, em Aprovações (tabela) e no Painel › Para você aprovar, com "Aprovar marcadas" e "Recusar marcadas" (um motivo para todas). As que estiverem em conflito ou derem erro ficam pendentes e aparecem num resumo.'
+    ], [
+      'Agora dá para marcar várias obras na tabela e ver só elas na tabela e no mapa.',
+      'Caderno em PDF só das obras filtradas ou selecionadas.',
+      'Editar várias obras de uma vez e aprovar ou recusar várias propostas de uma vez.'
+    ]],
     ['3.20', '26/11/2026', [
       'DPL: a etapa dos 57 trechos estratégicos segue as anotações do relatório "Andamento dos trechos estratégicos" de 26/11/2026 (páginas 2 e 3): Fase Preparatória (36 trechos sem indicação de recurso; no mapa, no Painel e na página inicial conta como planejamento, no lugar de "Indicação de Recurso"), Publicado (8 ainda em licitação), Homologado (5 com licitação finalizada) e Termo Aditivo (8 com termo aditivo em elaboração). As três últimas aparecem no mapa como licitação (tracejado branco). Cada etapa tem selo próprio e capítulo próprio no caderno; status (Paralisado) e observações continuam como estavam.'
     ], [

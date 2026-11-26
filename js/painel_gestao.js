@@ -385,8 +385,10 @@
       .map(function(c) { return perfis[c].nome; }).concat(['administrador']).join(', ');
   }
 
-  function cartaoProposta(x) {
+  function cartaoProposta(x, comMarca) {
     var p = x.p, d = descrever(x), decide = podeDecidir(x), chave = x.fonte + ':' + p.pid;
+    var marca = comMarca === true && decide && p.situacao === 'pendente'
+      ? '<input type="checkbox" class="pn-marca" data-marca="' + chave + '" title="Marcar para aprovar ou recusar em lote">' : '';
     var acoes = '<a class="link" href="' + linkProposta(x) + '">' + (x.fonte === 'camadas' ? 'ver no mapa' : 'abrir no mapa') + '</a>';
     if (p.situacao === 'pendente') {
       if (decide) acoes += '<span class="espaco"></span><button type="button" class="btn" data-recusar="' + chave + '">Recusar</button>' +
@@ -398,7 +400,7 @@
         (p.decidido_por && p.decidido_por !== p.criado_por ? ' por ' + esc(nomes[p.decidido_por] || '—') : '') + ' em ' + fmtDataHora(p.decidido_em) +
         (p.motivo ? ' · motivo: ' + esc(p.motivo) : '') + '</div>';
     return '<div class="pn-proposta pn-proposta-' + p.situacao + '">' +
-      '<div class="pn-prop-cab"><span class="pn-area">' + esc(nomeArea(x.area)) + '</span><b>' + esc(d.titulo) + '</b> <span class="pn-sub">' + esc(String(d.sub).slice(0, 110)) + '</span></div>' +
+      '<div class="pn-prop-cab">' + marca + '<span class="pn-area">' + esc(nomeArea(x.area)) + '</span><b>' + esc(d.titulo) + '</b> <span class="pn-sub">' + esc(String(d.sub).slice(0, 110)) + '</span></div>' +
       '<div class="pn-autor">Proposta de <b>' + esc(nomes[p.criado_por] || '—') + '</b>' + (p.perfil_autor ? ' (' + esc(Acesso.nomePerfil(p.perfil_autor)) + ')' : '') +
         ' em ' + fmtDataHora(p.criado_em) + '</div>' +
       (d.conflito ? '<div class="pn-conflito">Foi alterado depois desta proposta (versão ' + p.versao_base + ' → ' + x.atual.versao + '). Confira os valores atuais antes de aprovar.</div>' : '') +
@@ -485,7 +487,8 @@
 
     // 1. Aprovações (quem aprova o perfil do autor: pleno, gerenciador, administrador...)
     if (paraDecidir.length) {
-      html += '<h3 class="pn-subtitulo">Para você aprovar (' + paraDecidir.length + ')</h3>' + paraDecidir.map(cartaoProposta).join('');
+      html += '<h3 class="pn-subtitulo">Para você aprovar (' + paraDecidir.length + ')</h3>' + barraLote() +
+        paraDecidir.map(function(x) { return cartaoProposta(x, true); }).join('');
     } else if (aprovaAlgo()) {
       html += aviso('ok', 'Nenhuma proposta aguardando a sua aprovação.');
     }
@@ -523,7 +526,8 @@
       if (senha.length) html += aviso('info', senha.length + ' pessoa' + (senha.length > 1 ? 's' : '') + ' ainda com senha provisória',
         senha.map(function(u) { return esc(u.nome); }).join(', ') + ' (ainda não entrou para criar a própria senha).');
     }
-    $('listaAvisos').innerHTML = html || aviso('ok', 'Nenhum aviso no momento.');
+    $('listaAvisos').innerHTML = resultadoLote + (html || aviso('ok', 'Nenhum aviso no momento.'));
+    resultadoLote = '';
     ligarPrevias($('listaAvisos'));
   }
 
@@ -546,9 +550,60 @@
       toast(e.message, true);
     });
   }
+  // ---------- Aprovação em lote (26/11/2026) ----------
+  // Marca as propostas de "Para você aprovar" e aprova ou recusa todas (uma a uma no banco, que confere a permissão de
+  // cada). Conflito (alterado depois da proposta) e erro: a proposta fica pendente e aparece no resumo.
+  var resultadoLote = '';
+  function barraLote() {
+    return '<div class="pn-lote"><label class="chk"><input type="checkbox" id="pnLoteTodas"> Marcar todas</label>' +
+      '<span class="pn-lote-n" id="pnLoteN"></span><span class="espaco"></span>' +
+      '<button type="button" class="btn" data-lote-recusar disabled>Recusar marcadas</button>' +
+      '<button type="button" class="btn btn-primario" data-lote-aprovar disabled>Aprovar marcadas</button></div>' +
+      '<div class="pn-recusa pn-lote-recusa" hidden><textarea rows="2" placeholder="Motivo da recusa (vale para todas as marcadas; os autores vão ver)"></textarea>' +
+      '<button type="button" class="btn btn-perigo" data-lote-confirmar-recusa>Confirmar recusa</button></div>';
+  }
+  function marcadasLote() { return Array.prototype.map.call($('listaAvisos').querySelectorAll('.pn-marca:checked'), function(c) { return c.dataset.marca; }); }
+  function atualizarLote() {
+    if (!$('pnLoteTodas')) return;
+    var todas = $('listaAvisos').querySelectorAll('.pn-marca'), n = marcadasLote().length;
+    $('pnLoteTodas').checked = todas.length > 0 && n === todas.length;
+    $('pnLoteTodas').indeterminate = n > 0 && n < todas.length;
+    $('pnLoteN').textContent = n ? n + ' marcada(s)' : '';
+    $('listaAvisos').querySelectorAll('[data-lote-aprovar],[data-lote-recusar]').forEach(function(b) { b.disabled = !n; });
+  }
+  function decidirLote(acao, motivo) {
+    var chaves = marcadasLote();
+    if (!chaves.length || !confirm((acao === 'aprovar' ? 'Aprovar ' : 'Recusar ') + chaves.length + ' proposta(s) de uma vez?')) return;
+    $('listaAvisos').querySelectorAll('.pn-lote button, .pn-marca, #pnLoteTodas').forEach(function(b) { b.disabled = true; });
+    var ok = 0, falhas = [];
+    return chaves.reduce(function(fila, v, i) {
+      return fila.then(function() {
+        var x = separar(v), item = propostas.find(function(y) { return y.fonte + ':' + y.p.pid === v; });
+        var args = acao === 'aprovar' ? { p_pid: x.pid, p_forcar: false } : { p_pid: x.pid, p_motivo: motivo };
+        return rpcDe(x.fonte).rpc(rpcNome(x.fonte, acao), args).then(function(res) {
+          if (res.error) falhas.push({ item: item, motivo: res.error.message }); else ok++;
+        }, function(e) { falhas.push({ item: item, motivo: e.message }); }).then(function() {
+          $('pnLoteN').textContent = (acao === 'aprovar' ? 'Aprovando ' : 'Recusando ') + (i + 1) + ' de ' + chaves.length + '…';
+        });
+      });
+    }, Promise.resolve()).then(function() {
+      var txt = ok + (acao === 'aprovar' ? ' aprovada(s)' : ' recusada(s)');
+      if (falhas.length) resultadoLote = aviso('atencao', txt + '; ' + falhas.length + ' ficaram pendentes (decida uma a uma)',
+        falhas.map(function(f) { var d = f.item ? descrever(f.item) : null; return esc(d ? d.titulo : 'proposta') + ': ' +
+          esc(/CONFLITO/.test(f.motivo) ? 'alterado depois da proposta' : f.motivo); }).join(' · '));
+      return depoisDeDecidir(txt);
+    });
+  }
   function aoClicarAvisos(e) {
     var b = e.target.closest('button');
     if (!b) return;
+    if (b.hasAttribute('data-lote-aprovar')) return decidirLote('aprovar');
+    if (b.hasAttribute('data-lote-recusar')) { var cl = $('listaAvisos').querySelector('.pn-lote-recusa'); cl.hidden = false; cl.querySelector('textarea').focus(); return; }
+    if (b.hasAttribute('data-lote-confirmar-recusa')) {
+      var mot = b.closest('.pn-lote-recusa').querySelector('textarea').value.trim();
+      if (!mot) { toast('Escreva o motivo da recusa', true); return; }
+      return decidirLote('recusar', mot);
+    }
     if (b.dataset.aprovar) return aprovar(b.dataset.aprovar);
     if (b.dataset.recusar) { var caixa = b.closest('.pn-proposta').querySelector('.pn-recusa'); caixa.hidden = false; caixa.querySelector('textarea').focus(); return; }
     if (b.dataset.confirmarRecusa) {
@@ -867,6 +922,10 @@
     $('filtros').addEventListener('click', function(e) { var b = e.target.closest('[data-origem]'); if (b) { filtro = ''; filtrar(b.dataset.origem); } });
     $('gEtapas').addEventListener('click', function(e) { var b = e.target.closest('[data-origem]'); if (b) filtrar(b.dataset.origem); });
     $('listaAvisos').addEventListener('click', aoClicarAvisos);
+    $('listaAvisos').addEventListener('change', function(e) {
+      if (e.target.id === 'pnLoteTodas') $('listaAvisos').querySelectorAll('.pn-marca').forEach(function(c) { c.checked = e.target.checked; });
+      if (e.target.id === 'pnLoteTodas' || e.target.classList.contains('pn-marca')) atualizarLote();
+    });
     document.querySelectorAll('.adm-abas button').forEach(function(b) {
       b.addEventListener('click', function() {
         document.querySelectorAll('.adm-abas button').forEach(function(x) { x.classList.toggle('ativo', x === b); });

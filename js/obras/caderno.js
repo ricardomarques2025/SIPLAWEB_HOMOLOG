@@ -543,12 +543,25 @@
   }
 
   // ---------- Caderno completo ----------
+  // Recorte da tabela de obras (26/11/2026): "Caderno das obras filtradas/selecionadas" grava os códigos no
+  // localStorage e abre ?recorte=1; o caderno sai só com essas obras, numeradas 1, 2, 3... (a numeração é a do documento).
+  const CHAVE_RECORTE = 'siplaweb.caderno.recorte';
+  let RECORTE = null;   // { origem, codigos: Set, rotulo }
+  function lerRecorte() {
+    try {
+      const r = JSON.parse(localStorage.getItem(CHAVE_RECORTE) || 'null');
+      if (r && r.origem && Array.isArray(r.codigos) && r.codigos.length) return { origem: r.origem, codigos: new Set(r.codigos), rotulo: r.rotulo || 'escolhidas na tabela' };
+    } catch (e) { /* sem storage */ }
+    return null;
+  }
+
   async function gerarCaderno(base, opcoes) {
     const inicio = Date.now();
     $('btnGerar').disabled = true;
     status('Lendo obras…', false);
     $('paginas').innerHTML = '';
-    const obras = await lerObras(opcoes.origens);
+    let obras = await lerObras(opcoes.origens);
+    if (RECORTE) obras = obras.filter(o => RECORTE.codigos.has(o.codigo));
     await indexarBases(obras, base);
     status('Montando páginas…', false);
     const tem = s => opcoes.secoes.includes(s);
@@ -644,7 +657,7 @@
     status('Pronto para imprimir · ' + paginas + ' páginas (' + seg + ' s)', true);
     $('btnGerar').disabled = false;
     document.title = opcoes.titulo + ' ' + opcoes.ano;
-    Acesso.registrarEvento('exportou', 'Caderno de obras ' + opcoes.origens.join('+') + ' (' + paginas + ' páginas, ' + total + ' mapas)');
+    Acesso.registrarEvento('exportou', 'Caderno de obras ' + opcoes.origens.join('+') + (RECORTE ? ' — ' + RECORTE.codigos.size + ' obras ' + RECORTE.rotulo : '') + ' (' + paginas + ' páginas, ' + total + ' mapas)');
     return paginas;
   }
 
@@ -705,11 +718,23 @@
       window.print();
     });
 
+    if (modo === 'completo' && params.get('recorte')) {
+      RECORTE = lerRecorte();
+      if (!RECORTE || !escolhidas.includes(RECORTE.origem)) { status('A lista de obras deste caderno não está mais disponível. Gere de novo pela tabela de obras (Exportar ou Seleção).', false); return; }
+    }
     if (modo === 'completo') {
       $('grupoOrigens').innerHTML = ORIGENS.map(o => '<label><input type="checkbox" name="origem" value="' + esc(o.codigo) + '"' +
         (origensIniciais.includes(o.codigo) ? ' checked' : '') + '> ' + esc(o.nome) + '<sup class="ordem"></sup></label>').join('');
       ordemOrigens = origensIniciais.slice();
       mostrarOrdem();
+      // Com recorte: só a origem da tabela (as outras ficam travadas) e um aviso de quantas obras entram.
+      if (RECORTE) {
+        document.querySelectorAll('input[name="origem"]').forEach(i => { i.disabled = true; });
+        const aviso = document.createElement('span');
+        aviso.className = 'recorte-aviso';
+        aviso.textContent = RECORTE.codigos.size + (RECORTE.codigos.size === 1 ? ' obra ' : ' obras ') + RECORTE.rotulo + ' · numeradas 1, 2, 3…';
+        $('grupoOrigens').after(aviso);
+      }
       $('ano').value = params.get('ano') || new Date().getFullYear() + 1;
       $('titulo').value = params.get('titulo') || tituloPadrao(origensIniciais);
       let tituloMexido = !!params.get('titulo');

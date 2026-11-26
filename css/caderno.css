@@ -149,3 +149,5 @@ body {
 /* Prancha ainda na fila do caderno completo */
 .prancha-pendente { display: grid; place-items: center; background: #f4f5f7; }
 .pendente-txt { font: 600 14px Inter, system-ui, sans-serif; color: #8a93a3; }
+/* Caderno de um recorte da tabela de obras (filtradas ou selecionadas, 26/11/2026) */
+.barra-caderno .recorte-aviso { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 8px; background: #f0fdf4; border: 1px solid #86efac; color: #14652a; font-weight: 600; white-space: nowrap; }

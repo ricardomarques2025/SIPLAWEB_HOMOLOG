@@ -39,6 +39,11 @@ var ObrasPainel = (function() {
   var filtrarMapa = false;     // "Filtrar o mapa": o mapa acompanha a busca e os filtros das colunas (DadosBanco.definirRecorte)
   var recorteAplicado = '';    // chave do último recorte enviado ao mapa (evita redesenhar à toa)
   var tempoRecorte = null;
+  // Seleção de obras (26/11/2026): caixas de marcar na 1ª coluna, só enquanto a página está aberta (não fica guardada).
+  // Serve de filtro customizado (tabela e mapa), para o caderno das selecionadas e para a edição em lote.
+  var marcadas = {};           // uid -> true
+  var soMarcadas = false;      // a tabela (e o mapa, com "Filtrar o mapa") mostra só as marcadas
+  var ultimaMarcada = null;    // Shift+clique marca o intervalo
 
   map.createPane('obrasHaloPane').style.zIndex = 515;
 
@@ -134,6 +139,7 @@ var ObrasPainel = (function() {
               '<button type="button" data-obr-exp="geojson">GeoJSON com atributos (QGIS)</button>' +
               '<div class="menu-rotulo">Caderno</div>' +
               '<button type="button" id="obrCaderno" title="Planilhas e um mapa por obra (dá para juntar outras origens)">Caderno completo (PDF)</button>' +
+              '<button type="button" data-obr-exp="caderno-filtro" title="Só as obras que passam na busca e nos filtros das colunas, numeradas 1, 2, 3…">Caderno das obras filtradas (PDF)</button>' +
               '<button type="button" data-obr-exp="mapa-a4">Mapa A4 da obra selecionada (PDF)</button>' +
               // Histórico: só para quem participa da edição na origem (Acesso.podeExportarHistorico; ver mostrarHistorico)
               '<div class="menu-rotulo" data-obr-hist>Histórico</div>' +
@@ -147,6 +153,16 @@ var ObrasPainel = (function() {
           '<button type="button" class="btn btn-fantasma" id="obrLimpar" title="Limpar a busca e os filtros das colunas"><svg><use href="#o-filter-x"/></svg></button>' +
           '<span class="contador" id="obrContador"></span>' +
           '<button type="button" class="btn obr-filtrar-mapa" id="obrFiltrarMapa" aria-pressed="false" title="Ligado: o mapa mostra só as obras que passam na busca e nos filtros das colunas desta tabela (as das outras origens continuam)"><span class="obr-chave" aria-hidden="true"></span>Filtrar o mapa</button>' +
+          '<div class="menu">' +
+            '<button type="button" class="btn obr-selecao" id="obrSelecao" title="Obras marcadas na 1ª coluna (Shift+clique marca um intervalo)">Seleção <span class="obr-contagem" id="obrSelN">0</span></button>' +
+            '<div class="menu-lista" id="obrMenuSelecao">' +
+              '<button type="button" data-obr-sel="so" id="obrSelSo">Mostrar só as selecionadas</button>' +
+              '<button type="button" data-obr-sel="mapa">Só as selecionadas, também no mapa</button>' +
+              '<button type="button" data-obr-sel="caderno" data-exportar>Caderno das selecionadas (PDF)</button>' +
+              '<button type="button" data-obr-sel="lote" class="so-editor">Editar em lote…</button>' +
+              '<button type="button" data-obr-sel="limpar">Limpar seleção</button>' +
+            '</div>' +
+          '</div>' +
           '<div class="espaco"></div>' +
           '<button type="button" class="btn" id="obrColunas"><svg><use href="#o-cols"/></svg>Colunas</button>' +
           '<button type="button" class="btn btn-primario so-editor" id="obrNova"><svg><use href="#o-plus"/></svg>Nova obra</button>' +
@@ -176,6 +192,15 @@ var ObrasPainel = (function() {
         '<div class="dialogo-rodape"><span class="obr-aviso" id="obrNovaAviso"></span><div class="espaco"></div><button type="submit" class="btn btn-primario"><svg><use href="#o-check"/></svg>Cadastrar</button></div></form></dialog>' +
       '<dialog id="obrDlgColunas" class="dialogo dialogo-pequeno"><div class="dialogo-topo"><h3>Colunas visíveis</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
         '<div class="dialogo-corpo" id="obrColunasCorpo"></div></dialog>' +
+      '<dialog id="obrDlgLote" class="dialogo dialogo-pequeno"><form id="obrFormLote"><div class="dialogo-topo"><h3 id="obrLoteTitulo">Editar em lote</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
+        '<div class="dialogo-corpo"><div class="form-grade">' +
+          '<div class="campo largo"><label>Campo</label><select id="obrLoteCampo" required></select></div>' +
+          '<div class="campo largo" id="obrLoteValorWrap"><label>Valor novo</label><span id="obrLoteValor"></span></div>' +
+          '<label class="chk largo"><input type="checkbox" id="obrLoteVazio"> Deixar o campo vazio nas obras selecionadas</label>' +
+        '</div><p class="nota" id="obrLoteNota"></p></div>' +
+        '<div class="dialogo-rodape"><span class="obr-aviso" id="obrLoteAviso"></span><div class="espaco"></div>' +
+          '<button type="button" class="btn" data-obr-fechar>Cancelar</button>' +
+          '<button type="submit" class="btn btn-primario" id="obrLoteAplicar"><svg><use href="#o-check"/></svg>Aplicar</button></div></form></dialog>' +
       '<dialog id="obrDlgAprov" class="dialogo"><div class="dialogo-topo"><h3 id="obrAprovTitulo">Aprovações</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
         '<div class="dialogo-corpo" id="obrAprovCorpo"></div></dialog>' +
       '<div class="toasts" id="obrToasts"></div>';
@@ -240,6 +265,8 @@ var ObrasPainel = (function() {
     $('obrAbrirTabela').textContent = 'Abrir tabela de obras';
     filtros = { busca: '', etapa: '', status: '', tracado: '' };
     $('obrBusca').value = '';
+    marcadas = {}; soMarcadas = false; ultimaMarcada = null;
+    atualizarSelecao();
     if (grade) { grade.destroy(); grade = null; }
     tabelaPronta = null;
     if (filtrarMapa) aplicarRecorteMapa(false);   // tira o recorte da origem anterior; a tabela nova aplica o dela
@@ -410,6 +437,13 @@ var ObrasPainel = (function() {
   function criarGrade() {
     var visiveis = colunasVisiveis();
     var cols = [{
+      // Seleção (26/11/2026): caixa por obra; a do título marca/desmarca todas as que estão na tabela (com os filtros).
+      title: '', field: '_marca', width: 34, headerSort: false, frozen: true, hozAlign: 'center', cssClass: 'col-acao col-marca',
+      titleFormatter: function() { return '<input type="checkbox" class="obr-marca-todas" title="Marcar ou desmarcar todas as obras da tabela (com os filtros atuais)">'; },
+      headerClick: function(e) { e.stopPropagation(); e.preventDefault(); alternarTodas(); },
+      formatter: function(cell) { return '<input type="checkbox" class="obr-marca"' + (marcadas[cell.getRow().getData().uid] ? ' checked' : '') + ' tabindex="-1">'; },
+      cellClick: function(e, cell) { e.stopPropagation(); e.preventDefault(); alternarMarca(cell.getRow(), e.shiftKey); }
+    }, {
       title: '', field: '_ficha', width: 40, headerSort: false, frozen: true, hozAlign: 'center', cssClass: 'col-acao',
       formatter: function(cell) {
         return ObrasStore.propostaPendente(cell.getRow().getData().uid, TIPOS_PENDENTES) ? '<span class="obr-relogio" title="Proposta aguardando aprovação">◷</span>'
@@ -463,7 +497,7 @@ var ObrasPainel = (function() {
         try { row.reformat(); } catch (e) { /* linha saiu da tabela (filtro, troca de origem) */ }
       }, 0);
     }
-    grade.on('dataFiltered', function(f, linhas) { atualizarContador(linhas.length); agendarRecorteMapa(); });
+    grade.on('dataFiltered', function(f, linhas) { atualizarContador(linhas.length); agendarRecorteMapa(); atualizarSelecao(); });
   }
 
   function atualizarLinha(uid) {
@@ -482,6 +516,7 @@ var ObrasPainel = (function() {
   // Etapa, status, traçado e os demais campos: filtros no título de cada coluna (filtroColuna). Aqui fica só a busca.
   function preencherFiltros() { /* os filtros de lista montam as opções sozinhos */ }
   function atende(r) {
+    if (soMarcadas && !marcadas[r.uid]) return false;
     if (filtros.busca) {
       var alvo = semAcento(CAMPOS_OBRA.map(function(c) { return ObrasStore.valorAtual(r.uid, c.campo); }).join(' '));
       // Número com vírgula (como a tabela mostra, ex.: -15,9429) acha o valor guardado com ponto.
@@ -495,6 +530,128 @@ var ObrasPainel = (function() {
     if (!grade) return;
     grade.setFilter(function(d) { return atende(ObrasStore.obter(d.uid) || d); });
     atualizarContador(grade.getDataCount('active'));
+    atualizarSelecao();
+  }
+
+  // ---------- Seleção de obras (26/11/2026) ----------
+  function uidsMarcados() { return Object.keys(marcadas).filter(function(u) { return ObrasStore.obter(u); }); }
+  function alternarMarca(row, intervalo) {
+    var uid = row.getData().uid, marcar = !marcadas[uid];
+    var alvo = [row];
+    if (intervalo && ultimaMarcada && grade) {
+      var ativas = grade.getRows('active'), a = ativas.findIndex(function(x) { return x.getData().uid === ultimaMarcada; }), b = ativas.indexOf(row);
+      if (a !== -1 && b !== -1) alvo = ativas.slice(Math.min(a, b), Math.max(a, b) + 1);
+    }
+    alvo.forEach(function(x) { var u = x.getData().uid; if (marcar) marcadas[u] = true; else delete marcadas[u]; });
+    ultimaMarcada = uid;
+    selecaoMudou(alvo);
+  }
+  function alternarTodas() {
+    if (!grade) return;
+    var ativas = grade.getRows('active');
+    var todas = ativas.length && ativas.every(function(x) { return marcadas[x.getData().uid]; });
+    ativas.forEach(function(x) { var u = x.getData().uid; if (todas) delete marcadas[u]; else marcadas[u] = true; });
+    selecaoMudou(ativas);
+  }
+  function limparSelecao() {
+    var linhas = grade ? grade.getRows().filter(function(x) { return marcadas[x.getData().uid]; }) : [];
+    marcadas = {}; ultimaMarcada = null;
+    if (soMarcadas) { soMarcadas = false; aplicarFiltros(); }
+    selecaoMudou(linhas);
+  }
+  function selecaoMudou(linhas) {
+    (linhas || []).forEach(function(x) { try { x.getCell('_marca').getElement().querySelector('input').checked = !!marcadas[x.getData().uid]; } catch (e) { /* linha fora da tabela */ } });
+    if (soMarcadas) aplicarFiltros(); else atualizarSelecao();
+  }
+  // Contador do botão Seleção, estado da caixa do título e do "Mostrar só as selecionadas".
+  function atualizarSelecao() {
+    var n = uidsMarcados().length;
+    if (!$('obrSelN')) return;
+    $('obrSelN').textContent = n;
+    $('obrSelecao').classList.toggle('tem-selecao', n > 0);
+    $('obrSelecao').classList.toggle('ativo', soMarcadas);
+    $('obrSelSo').textContent = soMarcadas ? 'Mostrar todas as obras' : 'Mostrar só as selecionadas';
+    // Depois do clique: a caixa do título volta ao estado nativo ao fim do evento; acerta em seguida.
+    setTimeout(function() {
+      var cx = document.querySelector('#obrGrade .obr-marca-todas');
+      if (!cx || !grade) return;
+      var ativas = grade.getData('active'), m = ativas.filter(function(d) { return marcadas[d.uid]; }).length;
+      cx.checked = ativas.length > 0 && m === ativas.length;
+      cx.indeterminate = m > 0 && m < ativas.length;
+    }, 0);
+  }
+  function acaoSelecao(acao) {
+    $('obrMenuSelecao').classList.remove('aberto');
+    var n = uidsMarcados().length;
+    if (acao === 'limpar') { limparSelecao(); return; }
+    if (!n) { toast('Marque as obras na primeira coluna da tabela (Shift+clique marca um intervalo).', true); return; }
+    if (acao === 'so') { soMarcadas = !soMarcadas; aplicarFiltros(); return; }
+    if (acao === 'mapa') { soMarcadas = true; aplicarFiltros(); if (!filtrarMapa) alternarFiltroMapa(); else aplicarRecorteMapa(true); return; }
+    if (acao === 'caderno') { abrirCadernoRecorte(uidsMarcados().map(function(u) { return ObrasStore.obter(u); }), 'selecionadas na tabela'); return; }
+    if (acao === 'lote') abrirLote();
+  }
+
+  // Caderno de um recorte da tabela (filtradas ou selecionadas): os códigos vão pelo localStorage (a lista pode ser
+  // longa demais para o endereço); obras_caderno.html?recorte=1 lê e gera só essas, numeradas 1, 2, 3...
+  var CHAVE_RECORTE_CADERNO = 'siplaweb.caderno.recorte';
+  function abrirCadernoRecorte(registros, rotulo) {
+    if (!Acesso.podeExportar(ORIGEM)) { toast('O caderno (PDF) não está liberado para o seu perfil nesta origem.', true); return; }
+    var codigos = registros.map(function(r) { return r && r.codigo; }).filter(Boolean);
+    if (!codigos.length) { toast('Nenhuma obra com código para o caderno.', true); return; }
+    try { localStorage.setItem(CHAVE_RECORTE_CADERNO, JSON.stringify({ origem: ORIGEM, codigos: codigos, rotulo: rotulo, em: Date.now() })); }
+    catch (e) { toast('Não foi possível preparar o caderno: ' + e.message, true); return; }
+    window.open('obras_caderno.html?modo=completo&origens=' + encodeURIComponent(ORIGEM) + '&recorte=1', '_blank');
+  }
+
+  // Edição em lote: um campo por vez, o mesmo valor em todas as selecionadas. Vira alteração pendente (amarelo), como a
+  // edição na célula; "Revisar e salvar/enviar" confere, pede a data do fato (etapa/status) e grava ou manda para aprovação.
+  function camposLote() { return camposTabela().filter(function(c) { return !c.somenteLeitura; }); }
+  function abrirLote() {
+    if (!ObrasStore.podeAlterar()) { toast('A edição não está liberada para o seu perfil nesta origem.', true); return; }
+    var n = uidsMarcados().length;
+    $('obrLoteTitulo').textContent = 'Editar em lote · ' + n + (n === 1 ? ' obra' : ' obras');
+    $('obrLoteCampo').innerHTML = '<option value="">Escolha o campo…</option>' + camposLote().map(function(c) {
+      return '<option value="' + c.campo + '">' + esc(c.titulo) + '</option>';
+    }).join('');
+    $('obrLoteVazio').checked = false;
+    $('obrLoteAviso').textContent = '';
+    $('obrLoteNota').textContent = 'O valor entra como alteração pendente (amarelo) nas ' + n + ' obras. Depois, confira em "' +
+      (ObrasStore.modoProposta() ? 'Revisar e enviar' : 'Revisar e salvar') + '"' + (ObrasStore.modoProposta() ? ': cada obra vira uma proposta para aprovação.' : '.');
+    entradaLote();
+    $('obrDlgLote').showModal();
+  }
+  function entradaLote() {
+    var c = campo($('obrLoteCampo').value), vazio = $('obrLoteVazio').checked;
+    $('obrLoteValorWrap').hidden = !c || vazio;
+    if (!c) { $('obrLoteValor').innerHTML = ''; return; }
+    var h;
+    if (c.tipo === 'lista') h = '<select id="obrLoteEntrada"><option value=""></option>' + (ObrasStore.listas()[c.campo] || []).map(function(o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>';
+    else if (c.tipo === 'longo') h = '<textarea id="obrLoteEntrada" rows="3"></textarea>';
+    else h = '<input id="obrLoteEntrada"' + (c.tipo === 'numero' ? ' type="number" step="any" min="0"' : c.tipo === 'data' ? ' type="date"' + (c.futuro ? '' : ' max="' + hojeIso() + '"') : '') + '>';
+    $('obrLoteValor').innerHTML = h;
+  }
+  function aplicarLote(e) {
+    e.preventDefault();
+    var c = campo($('obrLoteCampo').value);
+    if (!c) { $('obrLoteAviso').textContent = 'Escolha o campo.'; return; }
+    var vazio = $('obrLoteVazio').checked, v = null;
+    if (!vazio) {
+      v = String($('obrLoteEntrada').value || '').trim();
+      if (v === '') { $('obrLoteAviso').textContent = 'Informe o valor novo (ou marque "Deixar o campo vazio").'; return; }
+      if (c.tipo === 'numero') v = Number(v.replace(',', '.'));
+      var erro = validarCampoObra(c.campo, v, ObrasStore.listas());
+      if (erro) { $('obrLoteAviso').textContent = erro; return; }
+    }
+    var uids = uidsMarcados(), mudaram = 0;
+    uids.forEach(function(u) {
+      ObrasStore.definirPendente(u, c.campo, v);
+      if (ObrasStore.pendente(u, c.campo)) mudaram++;
+      atualizarLinha(u);
+    });
+    $('obrDlgLote').close();
+    if (fichaUid) renderFicha();
+    toast(c.titulo + ': ' + (vazio ? 'vazio' : exibir(c, v)) + ' em ' + mudaram + ' de ' + uids.length + ' obra(s)' +
+      (mudaram < uids.length ? ' (as demais já tinham esse valor)' : '') + '. Confira e ' + (ObrasStore.modoProposta() ? 'envie' : 'salve') + ' em "Revisar".');
   }
   // ---------- Filtrar o mapa pela tabela ----------
   // Ligado: o mapa mostra só as obras que estão na tabela (busca e filtros das colunas); as outras origens ligadas
@@ -988,7 +1145,8 @@ var ObrasPainel = (function() {
     var decisao = p.situacao === 'pendente' ? '' : '<div class="aprov-decisao aprov-' + p.situacao + '">' + SITUACAO[p.situacao] +
       (p.decidido_por && p.decidido_por !== p.criado_por ? ' por ' + esc(ObrasStore.nomeUsuario(p.decidido_por)) : '') + ' em ' + fmtDataHora(p.decidido_em) +
       (p.motivo ? ' · motivo: ' + esc(p.motivo) : '') + '</div>';
-    return '<div class="rev-obra aprov-' + p.situacao + '" data-pid="' + p.pid + '"><div class="rev-cab"><b>' + titulo + '</b> ' +
+    var marca = decide ? '<input type="checkbox" class="aprov-marca" data-marca-pid="' + p.pid + '" title="Marcar para aprovar ou recusar em lote">' : '';
+    return '<div class="rev-obra aprov-' + p.situacao + '" data-pid="' + p.pid + '"><div class="rev-cab">' + marca + '<b>' + titulo + '</b> ' +
       esc(String((r && r.descricao) || p.mudancas.descricao || '').slice(0, 90)) + '</div>' +
       '<div class="aprov-autor">Proposta de <b>' + esc(ObrasStore.nomeUsuario(p.criado_por) || '—') + '</b>' +
         (p.perfil_autor ? ' (' + esc(Acesso.nomePerfil(p.perfil_autor)) + ')' : '') + ' em ' + fmtDataHora(p.criado_em) + '</div>' +
@@ -1025,12 +1183,63 @@ var ObrasPainel = (function() {
     var dec = todas.filter(function(p) { return p.situacao !== 'pendente'; });
     $('obrAprovTitulo').textContent = (aprovador ? 'Aprovações · ' : 'Minhas propostas · ') + ORIGEM;
     $('obrAprovCorpo').innerHTML =
-      (aprovador ? '<h4 class="aprov-secao">Para você decidir (' + decidir.length + ')</h4>' +
+      (aprovador ? '<h4 class="aprov-secao">Para você decidir (' + decidir.length + ')</h4>' + (decidir.length ? barraLote() : '') +
         (decidir.length ? decidir.map(cartaoProposta).join('') : '<div class="vazio">Nenhuma proposta para aprovar.</div>') : '') +
       (ObrasStore.podeAlterar() || minhas.length ? '<h4 class="aprov-secao">Minhas propostas aguardando (' + minhas.length + ')</h4>' +
         (minhas.length ? minhas.map(cartaoProposta).join('') : '<div class="vazio">Nenhuma proposta sua aguardando.</div>') : '') +
       (dec.length ? '<h4 class="aprov-secao">Decididas nos últimos 30 dias</h4>' + dec.map(cartaoProposta).join('') : '');
     if (typeof PreviaTracado !== 'undefined') PreviaTracado.ligar($('obrAprovCorpo'), cfgPrevia);
+  }
+
+  // Aprovação em lote (26/11/2026): marca as propostas e aprova ou recusa todas de uma vez (uma a uma no banco, que
+  // confere a permissão de cada). As que estão em conflito ou dão erro ficam pendentes e aparecem no resumo.
+  function barraLote() {
+    return '<div class="aprov-lote"><label class="chk"><input type="checkbox" id="obrAprovTodas"> Marcar todas</label>' +
+      '<span class="aprov-lote-n" id="obrAprovLoteN"></span><div class="espaco"></div>' +
+      '<button type="button" class="btn btn-fantasma" data-lote-recusar disabled>Recusar marcadas</button>' +
+      '<button type="button" class="btn btn-primario" data-lote-aprovar disabled><svg><use href="#o-check"/></svg>Aprovar marcadas</button></div>' +
+      '<div class="aprov-recusa aprov-lote-recusa" hidden><textarea rows="2" placeholder="Motivo da recusa (vale para todas as marcadas; os autores vão ver)"></textarea>' +
+      '<button type="button" class="btn btn-perigo-fantasma" data-lote-confirmar-recusa>Confirmar recusa</button></div>' +
+      '<div class="aprov-lote-resultado" id="obrAprovResultado" hidden></div>';
+  }
+  function pidsMarcados() {
+    return Array.prototype.map.call($('obrAprovCorpo').querySelectorAll('.aprov-marca:checked'), function(c) { return Number(c.dataset.marcaPid); });
+  }
+  function atualizarLoteAprov() {
+    var todas = $('obrAprovCorpo').querySelectorAll('.aprov-marca'), n = pidsMarcados().length;
+    if (!$('obrAprovTodas')) return;
+    $('obrAprovTodas').checked = todas.length > 0 && n === todas.length;
+    $('obrAprovTodas').indeterminate = n > 0 && n < todas.length;
+    $('obrAprovLoteN').textContent = n ? n + ' marcada(s)' : '';
+    $('obrAprovCorpo').querySelectorAll('[data-lote-aprovar],[data-lote-recusar]').forEach(function(b) { b.disabled = !n; });
+  }
+  function decidirLote(acao, motivo) {
+    var pids = pidsMarcados();
+    if (!pids.length) return;
+    var verbo = acao === 'aprovar' ? 'Aprovar' : 'Recusar';
+    if (!confirm(verbo + ' ' + pids.length + ' proposta(s) de uma vez?')) return;
+    var botoes = $('obrAprovCorpo').querySelectorAll('.aprov-lote button, .aprov-marca, #obrAprovTodas');
+    botoes.forEach(function(b) { b.disabled = true; });
+    var nObra = {};
+    ObrasStore.propostas().forEach(function(p) { var r = p.obra_uid && ObrasStore.obter(p.obra_uid); nObra[p.pid] = r ? r.codigo : 'obra nova'; });
+    situacaoDados('salvando');
+    return ObrasStore.decidirVarios(acao, pids, motivo, function(feitas, total) {
+      $('obrAprovLoteN').textContent = (acao === 'aprovar' ? 'Aprovando ' : 'Recusando ') + feitas + ' de ' + total + '…';
+    }).then(function(res) {
+      situacaoDados('ok');
+      renderAprovacoes();
+      recarregarGrade();
+      if (fichaUid) renderFicha();
+      var txt = res.ok.length + (acao === 'aprovar' ? ' aprovada(s)' : ' recusada(s)');
+      if (res.falhas.length && $('obrAprovResultado')) {
+        $('obrAprovResultado').hidden = false;
+        $('obrAprovResultado').innerHTML = '<b>' + txt + '; ' + res.falhas.length + ' ficaram pendentes</b> (decida uma a uma):' +
+          '<ul>' + res.falhas.map(function(f) { return '<li>' + esc(nObra[f.pid] || ('proposta ' + f.pid)) + ': ' +
+            esc(/CONFLITO/.test(f.motivo) ? 'a obra foi alterada depois da proposta' : f.motivo) + '</li>'; }).join('') + '</ul>';
+      }
+      toast(txt + (res.falhas.length ? ' · ' + res.falhas.length + ' pendente(s)' : ''), !!res.falhas.length && !res.ok.length);
+      return acao === 'aprovar' && res.ok.length ? recarregarMapa() : null;
+    }).catch(function(e) { situacaoDados('erro', e.message); toast(e.message, true); renderAprovacoes(); });
   }
 
   function ewktParaGeojson(t) {
@@ -1055,6 +1264,13 @@ var ObrasPainel = (function() {
   function aoClicarAprovacoes(e) {
     var b = e.target.closest('button');
     if (!b) return;
+    if (b.hasAttribute('data-lote-aprovar')) return decidirLote('aprovar');
+    if (b.hasAttribute('data-lote-recusar')) { var cx = $('obrAprovCorpo').querySelector('.aprov-lote-recusa'); cx.hidden = false; cx.querySelector('textarea').focus(); return; }
+    if (b.hasAttribute('data-lote-confirmar-recusa')) {
+      var mot = b.closest('.aprov-lote-recusa').querySelector('textarea').value.trim();
+      if (!mot) { toast('Escreva o motivo da recusa', true); return; }
+      return decidirLote('recusar', mot);
+    }
     if (b.dataset.aprovar) return aprovar(Number(b.dataset.aprovar));
     if (b.dataset.recusar) { var caixa = b.closest('.rev-obra').querySelector('.aprov-recusa'); caixa.hidden = false; caixa.querySelector('textarea').focus(); return; }
     if (b.dataset.confirmarRecusa) {
@@ -1107,6 +1323,7 @@ var ObrasPainel = (function() {
   function exportar(acao) {
     if (!Acesso.podeExportar(ORIGEM)) { toast('A exportação não está liberada para o seu perfil nesta origem.', true); return; }
     if (!grade) return;
+    if (acao === 'caderno-filtro') { abrirCadernoRecorte(grade.getData('active').map(function(d) { return ObrasStore.obter(d.uid) || d; }), 'filtradas na tabela'); return; }
     if (acao === 'historico') {
       if (!Acesso.podeExportarHistorico(ORIGEM)) { toast('O histórico de alterações é para quem edita ou aprova nesta origem.', true); return; }
       var origem = ORIGEM;
@@ -1212,7 +1429,20 @@ var ObrasPainel = (function() {
       document.querySelectorAll('.jur-ui .menu-lista').forEach(function(x) { x.classList.remove('aberto'); });
       if (!aberto) m.classList.add('aberto');
     });
-    document.addEventListener('click', function() { $('obrMenuExportar').classList.remove('aberto'); });
+    document.addEventListener('click', function() { $('obrMenuExportar').classList.remove('aberto'); $('obrMenuSelecao').classList.remove('aberto'); });
+    // Seleção de obras: menu, edição em lote
+    $('obrSelecao').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var m = $('obrMenuSelecao'), aberto = m.classList.contains('aberto');
+      document.querySelectorAll('.jur-ui .menu-lista').forEach(function(x) { x.classList.remove('aberto'); });
+      if (!aberto) m.classList.add('aberto');
+    });
+    document.querySelectorAll('[data-obr-sel]').forEach(function(b) {
+      b.addEventListener('click', function(e) { e.stopPropagation(); acaoSelecao(b.dataset.obrSel); });
+    });
+    $('obrLoteCampo').addEventListener('change', entradaLote);
+    $('obrLoteVazio').addEventListener('change', entradaLote);
+    $('obrFormLote').addEventListener('submit', aplicarLote);
     document.querySelectorAll('[data-obr-exp]').forEach(function(b) {
       b.addEventListener('click', function() { exportar(b.dataset.obrExp); });
     });
@@ -1220,6 +1450,10 @@ var ObrasPainel = (function() {
     $('obrOrigem').addEventListener('mousedown', preencherSeletorOrigem);   // ligou/desligou origens por outro caminho
     $('obrAprovacoes').addEventListener('click', abrirAprovacoes);
     $('obrAprovCorpo').addEventListener('click', aoClicarAprovacoes);
+    $('obrAprovCorpo').addEventListener('change', function(e) {
+      if (e.target.id === 'obrAprovTodas') $('obrAprovCorpo').querySelectorAll('.aprov-marca').forEach(function(c) { c.checked = e.target.checked; });
+      if (e.target.id === 'obrAprovTodas' || e.target.classList.contains('aprov-marca')) atualizarLoteAprov();
+    });
     $('obrNova').addEventListener('click', abrirNova);
     $('obrFormNova').addEventListener('submit', cadastrarNova);
     $('obrColunas').addEventListener('click', function() {
