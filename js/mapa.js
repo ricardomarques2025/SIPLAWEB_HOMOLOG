@@ -6449,7 +6449,7 @@ map.addControl(new LogoMapaControl());
   // e so os campos preenchidos numa grade rotulo/valor.
   var CORES_ETAPA_POPUP = {
     'Estudo Técnico Preliminar': '#c98a0c', 'Planejamento': '#c98a0c', 'Indicação de Recurso': '#b45309', 'Fase Preparatória': '#0284c7', 'Projeto': '#2b7bd6', 'Licitação': '#ea580c',
-    'Publicado': '#f97316', 'Homologado': '#ca8a04', 'Termo Aditivo': '#4d7c0f',   // etapas da DPL pelas anotações de 26/11/2026 'Obra': '#1e9538', 'Manutenção': '#7c3aed', 'Integrada': '#0891b2',
+    'Publicado': '#f97316', 'Homologado': '#ca8a04', 'Termo Aditivo': '#4d7c0f',   /* etapas da DPL (anotações de 26/11/2026) */ 'Obra': '#1e9538', 'Manutenção': '#7c3aed', 'Integrada': '#0891b2',
     'Projeto + Obra': '#0f766e'
   };
   var CAMPOS_CARTAO_OBRA = [
