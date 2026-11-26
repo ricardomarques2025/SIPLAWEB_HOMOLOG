@@ -353,13 +353,18 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-25.03';
+  var VERSAO_SITE = '2026-11-26.01';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
   // 4º item (opcional) = BOAS-VINDAS: resumo curto, em linguagem simples (sem termos técnicos), mostrado uma vez por
   // navegador ao entrar no mapa ou no Painel depois de cada versão nova (número novo). Toda versão nova deve ter.
   var NOVIDADES = [
+    ['3.20', '26/11/2026', [
+      'DPL: a etapa dos 57 trechos estratégicos segue as anotações do relatório "Andamento dos trechos estratégicos" de 26/11/2026 (páginas 2 e 3): Fase Preparatória (36 trechos sem indicação de recurso; no mapa, no Painel e na página inicial conta como planejamento, no lugar de "Indicação de Recurso"), Publicado (8 ainda em licitação), Homologado (5 com licitação finalizada) e Termo Aditivo (8 com termo aditivo em elaboração). As três últimas aparecem no mapa como licitação (tracejado branco). Cada etapa tem selo próprio e capítulo próprio no caderno; status (Paralisado) e observações continuam como estavam.'
+    ], [
+      'Trechos estratégicos da DPL com a etapa atualizada: Fase Preparatória, Publicado, Homologado e Termo Aditivo.'
+    ]],
     ['3.19', '25/11/2026', [
       'DPL: as obras de planejamento passam a ser os 57 trechos estratégicos do relatório "Andamento dos trechos estratégicos" de 24/11/2026 (páginas 2 e 3, 1.912 km), desenhados pela malha estadual (SRE). As 84 obras anteriores da DPL ficam só como backup no banco e não aparecem mais.',
       'Etapa nova "Indicação de Recurso" (trechos sem indicação de recurso): no mapa, no Painel e na página inicial conta como planejamento, com selo próprio e capítulo próprio no caderno. Os trechos em licitação, com licitação finalizada ou com termo aditivo em elaboração ficam na etapa Licitação, todos com status Paralisado; a situação de cada um está nas observações.',

@@ -6003,9 +6003,11 @@ map.addControl(new LogoMapaControl());
     return estilo;
   }
 
-  // Estudo Técnico Preliminar (ETP da DPJ, 13/11/2026) e Indicação de Recurso (trechos estratégicos da DPL, 25/11/2026)
-  // aparecem no mapa como planejamento.
-  function ehEtapaPlanejamento(etapa) { return /planejamento|estudo t[eé]cnico|indica[cç][aã]o de recurso/.test(etapa); }
+  // Estudo Técnico Preliminar (ETP da DPJ, 13/11/2026), Indicação de Recurso (trechos estratégicos da DPL, 25/11/2026)
+  // e Fase Preparatória (os mesmos trechos sem recurso, 26/11/2026) aparecem no mapa como planejamento.
+  function ehEtapaPlanejamento(etapa) { return /planejamento|estudo t[eé]cnico|indica[cç][aã]o de recurso|fase preparat[oó]ria/.test(etapa); }
+  // Publicado, Homologado e Termo Aditivo (trechos estratégicos da DPL, 26/11/2026) aparecem como Licitação.
+  function ehEtapaLicitacao(etapa) { return /licita|publicado|homologado|termo aditivo/.test(etapa); }
 
   function estiloObraPontoBase(dados) {
     if (dados && dados.__TIPO_PONTO_AERO === 'AERO_OBRA') {
@@ -6015,7 +6017,7 @@ map.addControl(new LogoMapaControl());
     var etapa = String((dados && dados.ETAPA) || '').toLowerCase();
     var intervencao = valorIntervencaoDados(dados).toLowerCase();
     // Licitação usa o mesmo ícone de obra (por enquanto não há ícone próprio).
-    if (etapa.indexOf('licita') >= 0) etapa = 'obra';
+    if (ehEtapaLicitacao(etapa)) etapa = 'obra';
     // Bueiro = OAC; Ponte e Viaduto = OAE (13/11/2026, script 019): mesmas placas de antes.
     // "OAE / OAC" (Ponte/bueiro do GPP, 18/11/2026) fica com a placa de OAE.
     if (/bueiro|\boac\b/.test(intervencao) && !/\boae\b/.test(intervencao)) {
@@ -6055,7 +6057,7 @@ map.addControl(new LogoMapaControl());
 
       if (servico.indexOf('revitaliza') >= 0 && ehEtapaPlanejamento(etapa)) tipoLinha = 'COM LINHA BRANCA DOR';
       // Em licitação: mesma cor da intervenção, com tracejado branco (ainda não é obra em execução).
-      if (etapa.indexOf('licita') >= 0) tipoLinha = 'COM LINHA BRANCA TRACEJADA';
+      if (ehEtapaLicitacao(etapa)) tipoLinha = 'COM LINHA BRANCA TRACEJADA';
 
       return {
         cor: cor,
@@ -6446,7 +6448,8 @@ map.addControl(new LogoMapaControl());
   // Linha superior (origem, codigo, proposta), intervencao como titulo, descricao, selo de etapa/status
   // e so os campos preenchidos numa grade rotulo/valor.
   var CORES_ETAPA_POPUP = {
-    'Estudo Técnico Preliminar': '#c98a0c', 'Planejamento': '#c98a0c', 'Indicação de Recurso': '#b45309', 'Projeto': '#2b7bd6', 'Licitação': '#ea580c', 'Obra': '#1e9538', 'Manutenção': '#7c3aed', 'Integrada': '#0891b2',
+    'Estudo Técnico Preliminar': '#c98a0c', 'Planejamento': '#c98a0c', 'Indicação de Recurso': '#b45309', 'Fase Preparatória': '#b45309', 'Projeto': '#2b7bd6', 'Licitação': '#ea580c',
+    'Publicado': '#db2777', 'Homologado': '#ca8a04', 'Termo Aditivo': '#4d7c0f',   // etapas da DPL pelas anotações de 26/11/2026 'Obra': '#1e9538', 'Manutenção': '#7c3aed', 'Integrada': '#0891b2',
     'Projeto + Obra': '#0f766e'
   };
   var CAMPOS_CARTAO_OBRA = [

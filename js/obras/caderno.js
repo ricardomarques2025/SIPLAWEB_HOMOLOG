@@ -99,7 +99,8 @@
     }
   };
   // Origem sem configuracao: um capitulo por etapa (nesta ordem) e uma secao por fonte.
-  const ETAPAS = [['Estudo Técnico Preliminar', 'ESTUDOS TÉCNICOS PRELIMINARES'], ['Planejamento', 'PLANEJAMENTO'], ['Indicação de Recurso', 'INDICAÇÃO DE RECURSO'], ['Projeto', 'PROJETOS'], ['Licitação', 'LICITAÇÕES'], ['Obra', 'OBRAS'],
+  const ETAPAS = [['Estudo Técnico Preliminar', 'ESTUDOS TÉCNICOS PRELIMINARES'], ['Planejamento', 'PLANEJAMENTO'], ['Indicação de Recurso', 'INDICAÇÃO DE RECURSO'], ['Projeto', 'PROJETOS'], ['Fase Preparatória', 'FASE PREPARATÓRIA'], ['Licitação', 'LICITAÇÕES'],
+    ['Publicado', 'LICITAÇÕES PUBLICADAS'], ['Homologado', 'LICITAÇÕES HOMOLOGADAS'], ['Termo Aditivo', 'TERMOS ADITIVOS'], ['Obra', 'OBRAS'],
     ['Integrada', 'OBRAS INTEGRADAS'], ['Manutenção', 'MANUTENÇÃO']];
   const FONTES = ['Tesouro', 'Fundeinfra', 'Associativo-Fundeinfra', 'Convênio', 'TARE', 'Doação'];
 

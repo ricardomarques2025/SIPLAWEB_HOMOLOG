@@ -69,7 +69,7 @@
     function contar(sigla, o) {
       var x = porOrigem[sigla] = porOrigem[sigla] || { total: 0, Obra: 0, Projeto: 0, Planejamento: 0, outros: 0 };
       x.total++;
-      var e = o.ETAPA === 'Estudo Técnico Preliminar' || o.ETAPA === 'Indicação de Recurso' ? 'Planejamento' : o.ETAPA;   // ETP e Indicação de Recurso contam como planejamento
+      var e = o.ETAPA === 'Estudo Técnico Preliminar' || o.ETAPA === 'Indicação de Recurso' || o.ETAPA === 'Fase Preparatória' ? 'Planejamento' : o.ETAPA;   // ETP, Indicação de Recurso e Fase Preparatória contam como planejamento
       if (x[e] !== undefined) x[e]++; else x.outros++;
     }
     regs.forEach(function(o) {

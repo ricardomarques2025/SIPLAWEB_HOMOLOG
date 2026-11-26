@@ -131,7 +131,7 @@
   function obrasFiltradas() { return filtro ? obras.filter(function(o) { return origensDaObra(o).indexOf(filtro) !== -1; }) : obras; }
 
   // ---------- Resumo ----------
-  function grupoEtapa(e) { if (e === 'Estudo Técnico Preliminar' || e === 'Indicação de Recurso') return 'Planejamento';   // ETP e Indicação de Recurso contam como planejamento
+  function grupoEtapa(e) { if (e === 'Estudo Técnico Preliminar' || e === 'Indicação de Recurso' || e === 'Fase Preparatória') return 'Planejamento';   // ETP, Indicação de Recurso e Fase Preparatória contam como planejamento
     return e === 'Planejamento' || e === 'Projeto' || e === 'Obra' ? e : 'outros'; }
 
   function renderResumo() {
