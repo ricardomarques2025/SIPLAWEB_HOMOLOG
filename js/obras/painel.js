@@ -561,7 +561,9 @@ var ObrasPainel = (function() {
   function atualizarSelecao() {
     var n = uidsMarcados().length;
     if (!$('obrSelN')) return;
-    if (soMarcadas && !n) { soMarcadas = false; aplicarFiltros(); return; }
+    // Nenhuma marcada com "Só as selecionadas" ligado: desliga e volta a mostrar todas. O novo filtro vai depois que o
+    // Tabulator termina a filtragem em curso (chamado de dentro dela, era ignorado e a tabela ficava com 0 obras).
+    if (soMarcadas && !n) { soMarcadas = false; setTimeout(aplicarFiltros, 0); return; }
     $('obrSelN').textContent = n;
     $('obrSelecao').classList.toggle('tem-selecao', n > 0);
     $('obrSelecao').classList.toggle('ativo', soMarcadas);
