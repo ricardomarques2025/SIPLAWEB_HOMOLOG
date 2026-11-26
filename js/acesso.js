@@ -353,13 +353,18 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-26.06';
+  var VERSAO_SITE = '2026-11-26.07';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
   // 4º item (opcional) = BOAS-VINDAS: resumo curto, em linguagem simples (sem termos técnicos), mostrado uma vez por
   // navegador ao entrar no mapa ou no Painel depois de cada versão nova (número novo). Toda versão nova deve ter.
   var NOVIDADES = [
+    ['3.22', '26/11/2026', [
+      'Tabela de obras: linha de totais no rodapé, com o número de obras e a soma das colunas de números (extensão, valores, áreas, horas…). Os totais acompanham a busca, os filtros das colunas e "Só as selecionadas"; o Avanço físico (%) mostra a média; latitude, longitude e população ficam sem total. Alterações pendentes já entram na conta.'
+    ], [
+      'A tabela de obras agora tem uma linha de totais no rodapé, que acompanha os filtros: filtre e veja na hora quantas obras, quantos km e quanto em valores.'
+    ]],
     ['3.21', '26/11/2026', [
       'Tabela de obras: seleção de obras pela caixa da primeira coluna (Shift+clique marca um intervalo; a caixa do título marca ou desmarca todas as que estão na tabela). Chave "Só as selecionadas" (com o número de marcadas): a tabela mostra só elas e, com "Filtrar o mapa" ligado, o mapa também. A seleção vale enquanto a página estiver aberta.',
       'Editar atributos: abre a ficha com as obras marcadas; onde os valores são diferentes aparece "vários". O que mudar vale para todas e passa por "Revisar e salvar/enviar" (do editor, uma proposta por obra).',

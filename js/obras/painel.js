@@ -432,6 +432,38 @@ var ObrasPainel = (function() {
     });
   }
 
+  // Linha de totais (26/11/2026): o Tabulator calcula só com as linhas que estão na tabela (busca, filtros das colunas,
+  // "Só as selecionadas"). Usa o valor atual (com o que está pendente). Código = nº de obras; números = soma;
+  // Avanço físico = média; Latitude, Longitude e População ficam sem total (somar não faz sentido).
+  var SEM_TOTAL = { latitude: 1, longitude: 1, populacao: 1 };
+  var MEDIA = { avanco_fisico: 1 };
+  function totalColuna(c) {
+    if (c.campo === 'codigo') return {
+      bottomCalc: 'count',
+      bottomCalcFormatter: function(cell) { var n = cell.getValue() || 0; return '<b>' + n.toLocaleString('pt-BR') + (n === 1 ? ' obra' : ' obras') + '</b>'; }
+    };
+    if (c.tipo !== 'numero' || SEM_TOTAL[c.campo]) return {};
+    return {
+      bottomCalc: function(values, linhas) {
+        var soma = 0, n = 0;
+        linhas.forEach(function(d) {
+          var v = ObrasStore.valorAtual(d.uid, c.campo);
+          if (v === '' || v == null || !isFinite(Number(v))) return;
+          soma += Number(v); n++;
+        });
+        if (!n) return null;
+        return MEDIA[c.campo] ? soma / n : soma;
+      },
+      bottomCalcFormatter: function(cell) {
+        var v = cell.getValue();
+        if (v == null) return '';
+        var txt = c.moeda ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          : v.toLocaleString('pt-BR', { maximumFractionDigits: MEDIA[c.campo] ? 1 : (c.casas || 3) });
+        return '<b class="num" title="' + (MEDIA[c.campo] ? 'Média das obras na tabela' : 'Soma das obras na tabela') + '">' + (MEDIA[c.campo] ? 'média ' : '') + esc(txt) + '</b>';
+      }
+    };
+  }
+
   function criarGrade() {
     var visiveis = colunasVisiveis();
     var cols = [{
@@ -464,8 +496,7 @@ var ObrasPainel = (function() {
         formatter: formatador(c), hozAlign: c.tipo === 'numero' ? 'right' : 'left',
         sorter: c.tipo === 'numero' ? 'number' : 'string', headerTooltip: c.titulo,
         tooltip: c.tipo === 'longo' ? function(e, cell) { return ObrasStore.valorAtual(cell.getRow().getData().uid, c.campo) || ''; } : false,
-        bottomCalc: c.campo === 'codigo' ? 'count' : undefined
-      }, filtroColuna(c), editorDe(c)));
+      }, totalColuna(c), filtroColuna(c), editorDe(c)));
     });
     grade = new Tabulator('#obrGrade', {
       data: ObrasStore.lista().map(function(r) { return Object.assign({}, r); }),
@@ -657,6 +688,7 @@ var ObrasPainel = (function() {
     $('obrDescartar').hidden = !n;
     $('obrRevisar').disabled = !n;
     $('obrRevisar').lastChild.textContent = ObrasStore.modoProposta() ? 'Revisar e enviar' : 'Revisar e salvar';
+    if (grade) { try { grade.recalc(); } catch (e) { /* tabela ainda montando */ } } // linha de totais com o valor pendente
   }
 
   // ---------- Revisar e salvar ----------

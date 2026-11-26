@@ -127,3 +127,8 @@
 .obr-ui .obr-varios { font-style: normal; font-weight: 700; font-size: 10.5px; color: #b45309; background: #fef3c7; border-radius: 4px; padding: 0 5px; margin-left: 4px; text-transform: lowercase; }
 .obr-ui .campo.varios input::placeholder, .obr-ui .campo.varios textarea::placeholder { color: #b45309; font-style: italic; }
 .obr-ui .campo.varios select { color: #b45309; font-style: italic; }
+
+/* Linha de totais da tabela de obras (26/11/2026): soma das obras que estão na tabela, com os filtros */
+.obr-ui .tabulator .tabulator-footer .tabulator-calcs-holder { background: #eef2f7; border-top: 2px solid #94a3b8; }
+.obr-ui .tabulator .tabulator-footer .tabulator-calcs-holder .tabulator-row { background: #eef2f7; }
+.obr-ui .tabulator-calcs .tabulator-cell { font-weight: 600; color: #1e293b; }
