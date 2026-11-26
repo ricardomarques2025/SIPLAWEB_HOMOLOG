@@ -736,6 +736,9 @@ var ObrasPainel = (function() {
         ? res.gravadas.length + (res.gravadas.length === 1 ? ' proposta enviada' : ' propostas enviadas') + ' para aprovação'
         : res.gravadas.length + (res.gravadas.length === 1 ? ' obra salva' : ' obras salvas') + ' no banco');
       res.recusadas.forEach(function(r) { toast(r.codigo + ': ' + r.motivo, true); });
+      // Salvou: encerra o "Selecionar no mapa"/"Marcar no mapa" da aba Traçado. Ligado, ele toma todo clique no mapa
+      // e nenhum popup abria depois da edição (26/11/2026).
+      if (ObrasTracado.ativo()) ObrasTracado.encerrar();
       recarregarGrade();
       if (fichaUid || fichaMulti) renderFicha();
       return res.proposta ? null : recarregarMapa();
