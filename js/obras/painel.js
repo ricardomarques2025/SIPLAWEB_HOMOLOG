@@ -31,6 +31,7 @@ var ObrasPainel = (function() {
   var tabelaPronta = null;
   var grade = null;
   var fichaUid = null;
+  var fichaMulti = null;      // ficha das obras selecionadas ("Editar atributos"): [uid...]; o que mudar vale para todas
   var abaFicha = 'dados';
   var selecionadoUid = null;
   var halo = null;
@@ -139,7 +140,7 @@ var ObrasPainel = (function() {
               '<button type="button" data-obr-exp="geojson">GeoJSON com atributos (QGIS)</button>' +
               '<div class="menu-rotulo">Caderno</div>' +
               '<button type="button" id="obrCaderno" title="Planilhas e um mapa por obra (dá para juntar outras origens)">Caderno completo (PDF)</button>' +
-              '<button type="button" data-obr-exp="caderno-filtro" title="Só as obras que passam na busca e nos filtros das colunas, numeradas 1, 2, 3…">Caderno das obras filtradas (PDF)</button>' +
+              '<button type="button" data-obr-exp="caderno-filtro" title="Só as obras que estão na tabela agora (busca, filtros das colunas e, se ligado, Só as selecionadas), numeradas 1, 2, 3…">Caderno das obras filtradas ou selecionadas (PDF)</button>' +
               '<button type="button" data-obr-exp="mapa-a4">Mapa A4 da obra selecionada (PDF)</button>' +
               // Histórico: só para quem participa da edição na origem (Acesso.podeExportarHistorico; ver mostrarHistorico)
               '<div class="menu-rotulo" data-obr-hist>Histórico</div>' +
@@ -153,16 +154,9 @@ var ObrasPainel = (function() {
           '<button type="button" class="btn btn-fantasma" id="obrLimpar" title="Limpar a busca e os filtros das colunas"><svg><use href="#o-filter-x"/></svg></button>' +
           '<span class="contador" id="obrContador"></span>' +
           '<button type="button" class="btn obr-filtrar-mapa" id="obrFiltrarMapa" aria-pressed="false" title="Ligado: o mapa mostra só as obras que passam na busca e nos filtros das colunas desta tabela (as das outras origens continuam)"><span class="obr-chave" aria-hidden="true"></span>Filtrar o mapa</button>' +
-          '<div class="menu">' +
-            '<button type="button" class="btn obr-selecao" id="obrSelecao" title="Obras marcadas na 1ª coluna (Shift+clique marca um intervalo)">Seleção <span class="obr-contagem" id="obrSelN">0</span></button>' +
-            '<div class="menu-lista" id="obrMenuSelecao">' +
-              '<button type="button" data-obr-sel="so" id="obrSelSo">Mostrar só as selecionadas</button>' +
-              '<button type="button" data-obr-sel="mapa">Só as selecionadas, também no mapa</button>' +
-              '<button type="button" data-obr-sel="caderno" data-exportar>Caderno das selecionadas (PDF)</button>' +
-              '<button type="button" data-obr-sel="lote" class="so-editor">Editar em lote…</button>' +
-              '<button type="button" data-obr-sel="limpar">Limpar seleção</button>' +
-            '</div>' +
-          '</div>' +
+          // Seleção (26/11/2026): chave "Só as selecionadas" (com o número de marcadas) e "Editar atributos" (ficha das selecionadas).
+          '<button type="button" class="btn obr-filtrar-mapa obr-selecao" id="obrSelecao" aria-pressed="false" title="Ligado: a tabela mostra só as obras marcadas na 1ª coluna (com Filtrar o mapa ligado, o mapa também). Shift+clique marca um intervalo."><span class="obr-chave" aria-hidden="true"></span>Só as selecionadas <span class="obr-contagem" id="obrSelN">0</span></button>' +
+          '<button type="button" class="btn so-editor" id="obrEditarSel" disabled title="Abre a ficha com as obras marcadas: o que mudar vale para todas"><svg><use href="#o-split"/></svg>Editar atributos</button>' +
           '<div class="espaco"></div>' +
           '<button type="button" class="btn" id="obrColunas"><svg><use href="#o-cols"/></svg>Colunas</button>' +
           '<button type="button" class="btn btn-primario so-editor" id="obrNova"><svg><use href="#o-plus"/></svg>Nova obra</button>' +
@@ -192,15 +186,6 @@ var ObrasPainel = (function() {
         '<div class="dialogo-rodape"><span class="obr-aviso" id="obrNovaAviso"></span><div class="espaco"></div><button type="submit" class="btn btn-primario"><svg><use href="#o-check"/></svg>Cadastrar</button></div></form></dialog>' +
       '<dialog id="obrDlgColunas" class="dialogo dialogo-pequeno"><div class="dialogo-topo"><h3>Colunas visíveis</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
         '<div class="dialogo-corpo" id="obrColunasCorpo"></div></dialog>' +
-      '<dialog id="obrDlgLote" class="dialogo dialogo-pequeno"><form id="obrFormLote"><div class="dialogo-topo"><h3 id="obrLoteTitulo">Editar em lote</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
-        '<div class="dialogo-corpo"><div class="form-grade">' +
-          '<div class="campo largo"><label>Campo</label><select id="obrLoteCampo" required></select></div>' +
-          '<div class="campo largo" id="obrLoteValorWrap"><label>Valor novo</label><span id="obrLoteValor"></span></div>' +
-          '<label class="chk largo"><input type="checkbox" id="obrLoteVazio"> Deixar o campo vazio nas obras selecionadas</label>' +
-        '</div><p class="nota" id="obrLoteNota"></p></div>' +
-        '<div class="dialogo-rodape"><span class="obr-aviso" id="obrLoteAviso"></span><div class="espaco"></div>' +
-          '<button type="button" class="btn" data-obr-fechar>Cancelar</button>' +
-          '<button type="submit" class="btn btn-primario" id="obrLoteAplicar"><svg><use href="#o-check"/></svg>Aplicar</button></div></form></dialog>' +
       '<dialog id="obrDlgAprov" class="dialogo"><div class="dialogo-topo"><h3 id="obrAprovTitulo">Aprovações</h3><button type="button" class="btn-icone" data-obr-fechar><svg><use href="#o-x"/></svg></button></div>' +
         '<div class="dialogo-corpo" id="obrAprovCorpo"></div></dialog>' +
       '<div class="toasts" id="obrToasts"></div>';
@@ -333,7 +318,7 @@ var ObrasPainel = (function() {
     situacaoDados('carregando');
     ObrasStore.carregar(ORIGEM).then(function() {
       recarregarGrade();
-      if (fichaUid) renderFicha();
+      if (fichaUid || fichaMulti) renderFicha();
       atualizarAprovacoes();
       situacaoDados('ok');
       toast('Dados atualizados do banco');
@@ -387,15 +372,28 @@ var ObrasPainel = (function() {
   function camposTabela() { return camposObraDaOrigem(ORIGEM); }
 
   function colunasVisiveisPadrao() {
-    var lista = ObrasStore.lista();
+    var lista = ObrasStore.lista(), extras = COLUNAS_EXTRAS_ORIGEM[ORIGEM] || [];
     return camposTabela().filter(function(c) {
+      if (extras.indexOf(c.campo) !== -1) return true;
       if (c.oculta) return false;
       if (c.soFiltro) return ObrasStore.ehFiltro() || ObrasStore.ehGrupo();   // e na tabela única do grupo (PGE)   // coluna Origem: só nas tabelas FUNDEINFRA e TARE (DOR + DPJ)
       return c.comum || lista.some(function(r) { return r[c.campo] !== null && r[c.campo] !== undefined && r[c.campo] !== ''; });
     }).map(function(c) { return c.campo; });
   }
   function colunasVisiveis() {
-    try { var v = JSON.parse(localStorage.getItem(chaveColunas())); if (Array.isArray(v)) return v; } catch (e) { /* sem storage */ }
+    try {
+      var v = JSON.parse(localStorage.getItem(chaveColunas()));
+      if (Array.isArray(v)) {
+        (COLUNAS_EXTRAS_ORIGEM[ORIGEM] || []).forEach(function(c) {
+          var marca = 'siplaweb.obras.colunaExtra.' + ORIGEM + '.' + c;
+          if (localStorage.getItem(marca)) return;
+          if (v.indexOf(c) === -1) v.push(c);
+          localStorage.setItem(marca, '1');
+          localStorage.setItem(chaveColunas(), JSON.stringify(v));
+        });
+        return v;
+      }
+    } catch (e) { /* sem storage */ }
     return colunasVisiveisPadrao();
   }
 
@@ -553,42 +551,33 @@ var ObrasPainel = (function() {
     ativas.forEach(function(x) { var u = x.getData().uid; if (todas) delete marcadas[u]; else marcadas[u] = true; });
     selecaoMudou(ativas);
   }
-  function limparSelecao() {
-    var linhas = grade ? grade.getRows().filter(function(x) { return marcadas[x.getData().uid]; }) : [];
-    marcadas = {}; ultimaMarcada = null;
-    if (soMarcadas) { soMarcadas = false; aplicarFiltros(); }
-    selecaoMudou(linhas);
-  }
   function selecaoMudou(linhas) {
     (linhas || []).forEach(function(x) { try { x.getCell('_marca').getElement().querySelector('input').checked = !!marcadas[x.getData().uid]; } catch (e) { /* linha fora da tabela */ } });
     if (soMarcadas) aplicarFiltros(); else atualizarSelecao();
+    // Ficha das selecionadas aberta: acompanha a seleção (sem nenhuma marcada, fecha).
+    if (fichaMulti) { if (uidsMarcados().length) abrirFichaMulti(); else fecharFicha(); }
   }
-  // Contador do botão Seleção, estado da caixa do título e do "Mostrar só as selecionadas".
+  // Número de marcadas, chave "Só as selecionadas", botão "Editar atributos" e a caixa do título (todas / algumas).
   function atualizarSelecao() {
     var n = uidsMarcados().length;
     if (!$('obrSelN')) return;
+    if (soMarcadas && !n) { soMarcadas = false; aplicarFiltros(); return; }
     $('obrSelN').textContent = n;
     $('obrSelecao').classList.toggle('tem-selecao', n > 0);
     $('obrSelecao').classList.toggle('ativo', soMarcadas);
-    $('obrSelSo').textContent = soMarcadas ? 'Mostrar todas as obras' : 'Mostrar só as selecionadas';
-    // Depois do clique: a caixa do título volta ao estado nativo ao fim do evento; acerta em seguida.
-    setTimeout(function() {
-      var cx = document.querySelector('#obrGrade .obr-marca-todas');
-      if (!cx || !grade) return;
-      var ativas = grade.getData('active'), m = ativas.filter(function(d) { return marcadas[d.uid]; }).length;
-      cx.checked = ativas.length > 0 && m === ativas.length;
-      cx.indeterminate = m > 0 && m < ativas.length;
-    }, 0);
+    $('obrSelecao').setAttribute('aria-pressed', soMarcadas ? 'true' : 'false');
+    $('obrEditarSel').disabled = !n;
+    $('obrEditarSel').lastChild.textContent = n > 1 ? 'Editar atributos (' + n + ')' : 'Editar atributos';
+    var cx = document.querySelector('#obrGrade .obr-marca-todas');
+    if (!cx || !grade) return;
+    var ativas = grade.getData('active'), m = ativas.filter(function(d) { return marcadas[d.uid]; }).length;
+    cx.checked = ativas.length > 0 && m === ativas.length;
+    cx.indeterminate = m > 0 && m < ativas.length;
   }
-  function acaoSelecao(acao) {
-    $('obrMenuSelecao').classList.remove('aberto');
-    var n = uidsMarcados().length;
-    if (acao === 'limpar') { limparSelecao(); return; }
-    if (!n) { toast('Marque as obras na primeira coluna da tabela (Shift+clique marca um intervalo).', true); return; }
-    if (acao === 'so') { soMarcadas = !soMarcadas; aplicarFiltros(); return; }
-    if (acao === 'mapa') { soMarcadas = true; aplicarFiltros(); if (!filtrarMapa) alternarFiltroMapa(); else aplicarRecorteMapa(true); return; }
-    if (acao === 'caderno') { abrirCadernoRecorte(uidsMarcados().map(function(u) { return ObrasStore.obter(u); }), 'selecionadas na tabela'); return; }
-    if (acao === 'lote') abrirLote();
+  function alternarSoMarcadas() {
+    if (!soMarcadas && !uidsMarcados().length) { toast('Marque as obras na primeira coluna da tabela (Shift+clique marca um intervalo).', true); return; }
+    soMarcadas = !soMarcadas;
+    aplicarFiltros();
   }
 
   // Caderno de um recorte da tabela (filtradas ou selecionadas): os códigos vão pelo localStorage (a lista pode ser
@@ -603,56 +592,6 @@ var ObrasPainel = (function() {
     window.open('obras_caderno.html?modo=completo&origens=' + encodeURIComponent(ORIGEM) + '&recorte=1', '_blank');
   }
 
-  // Edição em lote: um campo por vez, o mesmo valor em todas as selecionadas. Vira alteração pendente (amarelo), como a
-  // edição na célula; "Revisar e salvar/enviar" confere, pede a data do fato (etapa/status) e grava ou manda para aprovação.
-  function camposLote() { return camposTabela().filter(function(c) { return !c.somenteLeitura; }); }
-  function abrirLote() {
-    if (!ObrasStore.podeAlterar()) { toast('A edição não está liberada para o seu perfil nesta origem.', true); return; }
-    var n = uidsMarcados().length;
-    $('obrLoteTitulo').textContent = 'Editar em lote · ' + n + (n === 1 ? ' obra' : ' obras');
-    $('obrLoteCampo').innerHTML = '<option value="">Escolha o campo…</option>' + camposLote().map(function(c) {
-      return '<option value="' + c.campo + '">' + esc(c.titulo) + '</option>';
-    }).join('');
-    $('obrLoteVazio').checked = false;
-    $('obrLoteAviso').textContent = '';
-    $('obrLoteNota').textContent = 'O valor entra como alteração pendente (amarelo) nas ' + n + ' obras. Depois, confira em "' +
-      (ObrasStore.modoProposta() ? 'Revisar e enviar' : 'Revisar e salvar') + '"' + (ObrasStore.modoProposta() ? ': cada obra vira uma proposta para aprovação.' : '.');
-    entradaLote();
-    $('obrDlgLote').showModal();
-  }
-  function entradaLote() {
-    var c = campo($('obrLoteCampo').value), vazio = $('obrLoteVazio').checked;
-    $('obrLoteValorWrap').hidden = !c || vazio;
-    if (!c) { $('obrLoteValor').innerHTML = ''; return; }
-    var h;
-    if (c.tipo === 'lista') h = '<select id="obrLoteEntrada"><option value=""></option>' + (ObrasStore.listas()[c.campo] || []).map(function(o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>';
-    else if (c.tipo === 'longo') h = '<textarea id="obrLoteEntrada" rows="3"></textarea>';
-    else h = '<input id="obrLoteEntrada"' + (c.tipo === 'numero' ? ' type="number" step="any" min="0"' : c.tipo === 'data' ? ' type="date"' + (c.futuro ? '' : ' max="' + hojeIso() + '"') : '') + '>';
-    $('obrLoteValor').innerHTML = h;
-  }
-  function aplicarLote(e) {
-    e.preventDefault();
-    var c = campo($('obrLoteCampo').value);
-    if (!c) { $('obrLoteAviso').textContent = 'Escolha o campo.'; return; }
-    var vazio = $('obrLoteVazio').checked, v = null;
-    if (!vazio) {
-      v = String($('obrLoteEntrada').value || '').trim();
-      if (v === '') { $('obrLoteAviso').textContent = 'Informe o valor novo (ou marque "Deixar o campo vazio").'; return; }
-      if (c.tipo === 'numero') v = Number(v.replace(',', '.'));
-      var erro = validarCampoObra(c.campo, v, ObrasStore.listas());
-      if (erro) { $('obrLoteAviso').textContent = erro; return; }
-    }
-    var uids = uidsMarcados(), mudaram = 0;
-    uids.forEach(function(u) {
-      ObrasStore.definirPendente(u, c.campo, v);
-      if (ObrasStore.pendente(u, c.campo)) mudaram++;
-      atualizarLinha(u);
-    });
-    $('obrDlgLote').close();
-    if (fichaUid) renderFicha();
-    toast(c.titulo + ': ' + (vazio ? 'vazio' : exibir(c, v)) + ' em ' + mudaram + ' de ' + uids.length + ' obra(s)' +
-      (mudaram < uids.length ? ' (as demais já tinham esse valor)' : '') + '. Confira e ' + (ObrasStore.modoProposta() ? 'envie' : 'salve') + ' em "Revisar".');
-  }
   // ---------- Filtrar o mapa pela tabela ----------
   // Ligado: o mapa mostra só as obras que estão na tabela (busca e filtros das colunas); as outras origens ligadas
   // também saem enquanto o filtro estiver ligado (18/11/2026).
@@ -764,7 +703,7 @@ var ObrasPainel = (function() {
         : res.gravadas.length + (res.gravadas.length === 1 ? ' obra salva' : ' obras salvas') + ' no banco');
       res.recusadas.forEach(function(r) { toast(r.codigo + ': ' + r.motivo, true); });
       recarregarGrade();
-      if (fichaUid) renderFicha();
+      if (fichaUid || fichaMulti) renderFicha();
       return res.proposta ? null : recarregarMapa();
     }).catch(function(e) { situacaoDados('erro', e.message); toast('Falha ao salvar: ' + e.message, true); })
       .then(function() { $('obrConfirmar').disabled = false; atualizarPendentes(); });
@@ -846,6 +785,8 @@ var ObrasPainel = (function() {
   function abrirFicha(uid) {
     if (!ObrasStore.obter(uid)) return;
     if (uid !== fichaUid) ObrasTracado.encerrar();
+    fichaMulti = null;
+    $('obrFicha').classList.remove('multi');
     fichaUid = uid;
     selecionadoUid = uid;
     posicionar();
@@ -858,11 +799,66 @@ var ObrasPainel = (function() {
   function fecharFicha() {
     ObrasTracado.encerrar();
     fichaUid = null;
+    fichaMulti = null;
+    $('obrFicha').classList.remove('multi');
     $('obrFicha').classList.remove('aberta');
     $('obrFicha').setAttribute('aria-hidden', 'true');
   }
 
+  // Ficha das selecionadas (26/11/2026): os mesmos campos da aba Dados; onde as obras têm valores diferentes aparece
+  // "vários". Mudar um campo põe o valor novo em todas (fica pendente, como na ficha de uma obra, até "Revisar e salvar").
+  function abrirFichaMulti() {
+    ObrasTracado.encerrar();
+    fichaUid = null;
+    fichaMulti = uidsMarcados();
+    if (!fichaMulti.length) { fecharFicha(); return; }
+    posicionar();
+    renderFicha();
+    $('obrFicha').classList.add('aberta', 'multi');
+    $('obrFicha').setAttribute('aria-hidden', 'false');
+  }
+  function renderFichaMulti() {
+    var regs = fichaMulti.map(function(u) { return ObrasStore.obter(u); }).filter(Boolean);
+    if (!regs.length) { fecharFicha(); return; }
+    var edita = ObrasStore.podeAlterar();
+    $('obrFichaSup').textContent = regs.length + ' obras selecionadas · ' + rotuloOrigem(ORIGEM);
+    $('obrFichaTitulo').textContent = 'Editar atributos';
+    var grupos = GRUPOS_FICHA_OBRA.slice(), camposFicha = camposTabela();
+    camposFicha.forEach(function(c) { if (grupos.indexOf(c.grupo) === -1) grupos.push(c.grupo); });
+    $('obrFichaCorpo').innerHTML = '<div class="obr-multi-nota">' + (edita
+      ? 'O que você mudar aqui vale para as <b>' + regs.length + ' obras</b>. <b>vários</b> = as obras têm valores diferentes nesse campo (deixe como está para não mexer). As mudanças ficam pendentes até ' + (ObrasStore.modoProposta() ? '"Revisar e enviar" (uma proposta por obra).' : '"Revisar e salvar".')
+      : 'Consulta das ' + regs.length + ' obras selecionadas; <b>vários</b> = valores diferentes.') + '</div>' +
+      grupos.map(function(g) {
+        var campos = camposFicha.filter(function(c) { return c.grupo === g && c.campo !== 'grupo_codigo'; });
+        return campos.length ? '<div class="form-grupo"><h4>' + g + '</h4><div class="form-grade">' + campos.map(function(c) { return campoFichaMulti(c, regs); }).join('') + '</div></div>' : '';
+      }).join('');
+  }
+  function campoFichaMulti(c, regs) {
+    var valores = regs.map(function(r) { var v = ObrasStore.valorAtual(r.uid, c.campo); return v == null ? '' : v; });
+    var iguais = valores.every(function(v) { return JSON.stringify(v) === JSON.stringify(valores[0]); });
+    var v = iguais ? valores[0] : '';
+    var largo = c.tipo === 'longo' ? ' largo' : '';
+    var editado = regs.some(function(r) { return ObrasStore.pendente(r.uid, c.campo); }) ? ' editado' : '';
+    var bloqueio = ObrasStore.podeAlterar() && !c.somenteLeitura ? '' : ' disabled';
+    var ph = iguais ? '' : ' placeholder="vários"';
+    var entrada;
+    if (c.tipo === 'lista') {
+      var opcoes = (ObrasStore.listas()[c.campo] || []).slice();
+      if (v && opcoes.indexOf(v) === -1) opcoes.push(v);
+      entrada = '<select data-campo="' + c.campo + '"' + bloqueio + '>' + (iguais ? '<option value=""></option>' : '<option value="__varios__" selected>vários</option><option value="">(vazio em todas)</option>') +
+        opcoes.map(function(o) { return '<option' + (iguais && o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+    } else if (c.tipo === 'longo') {
+      entrada = '<textarea data-campo="' + c.campo + '" rows="3"' + ph + bloqueio + '>' + esc(v) + '</textarea>';
+    } else {
+      var tipoHtml = c.tipo === 'numero' ? ' type="number" step="any" min="0"' : c.tipo === 'data' ? ' type="date"' + (c.futuro ? '' : ' max="' + hojeIso() + '"') : '';
+      entrada = '<input data-campo="' + c.campo + '"' + tipoHtml + ph + bloqueio + ' value="' + esc(v) + '">';
+    }
+    return '<div class="campo' + largo + editado + (iguais ? '' : ' varios') + '" data-wrap="' + c.campo + '"><label><span class="marcador"></span>' + c.titulo +
+      (iguais ? '' : ' <em class="obr-varios">vários</em>') + '</label>' + entrada + '</div>';
+  }
+
   function renderFicha() {
+    if (fichaMulti) return renderFichaMulti();
     var r = ObrasStore.obter(fichaUid);
     if (!r) { fecharFicha(); return; }
     var etapa = ObrasStore.valorAtual(r.uid, 'etapa');
@@ -923,6 +919,14 @@ var ObrasPainel = (function() {
 
   function aoEditarFicha(e) {
     var t = e.target;
+    if (fichaMulti && t.dataset.campo && ObrasStore.podeAlterar()) {
+      var cm = campo(t.dataset.campo), vm = t.value.trim();
+      if (vm === '__varios__') return;
+      if (cm.tipo === 'numero') vm = vm === '' ? null : Number(vm);
+      fichaMulti.forEach(function(u) { ObrasStore.definirPendente(u, cm.campo, vm); atualizarLinha(u); });
+      renderFichaMulti();
+      return;
+    }
     if (!fichaUid || !t.dataset.campo || !ObrasStore.podeAlterar()) return;
     var c = campo(t.dataset.campo);
     var v = t.value.trim();
@@ -1229,7 +1233,7 @@ var ObrasPainel = (function() {
       situacaoDados('ok');
       renderAprovacoes();
       recarregarGrade();
-      if (fichaUid) renderFicha();
+      if (fichaUid || fichaMulti) renderFicha();
       var txt = res.ok.length + (acao === 'aprovar' ? ' aprovada(s)' : ' recusada(s)');
       if (res.falhas.length && $('obrAprovResultado')) {
         $('obrAprovResultado').hidden = false;
@@ -1252,7 +1256,7 @@ var ObrasPainel = (function() {
       toast('Proposta aprovada' + (r ? ': ' + r.codigo : ''));
       if (r) atualizarLinha(r.uid);
       renderAprovacoes();
-      if (fichaUid) renderFicha();
+      if (fichaUid || fichaMulti) renderFicha();
       return recarregarMapa();
     }).catch(function(e) {
       if (/CONFLITO/.test(e.message) && confirm(e.message.replace('CONFLITO: ', '') + '.\n\nAprovar mesmo assim? Os campos da proposta sobrescrevem os valores atuais.')) return aprovar(pid, true);
@@ -1276,12 +1280,12 @@ var ObrasPainel = (function() {
     if (b.dataset.confirmarRecusa) {
       var motivo = b.closest('.aprov-recusa').querySelector('textarea').value.trim();
       if (!motivo) { toast('Escreva o motivo da recusa', true); return; }
-      return ObrasStore.recusar(Number(b.dataset.confirmarRecusa), motivo).then(function() { toast('Proposta recusada'); renderAprovacoes(); recarregarGrade(); if (fichaUid) renderFicha(); })
+      return ObrasStore.recusar(Number(b.dataset.confirmarRecusa), motivo).then(function() { toast('Proposta recusada'); renderAprovacoes(); recarregarGrade(); if (fichaUid || fichaMulti) renderFicha(); })
         .catch(function(err) { toast(err.message, true); });
     }
     if (b.dataset.cancelar) {
       if (!confirm('Cancelar esta proposta?')) return;
-      return ObrasStore.cancelar(Number(b.dataset.cancelar)).then(function() { toast('Proposta cancelada'); renderAprovacoes(); recarregarGrade(); if (fichaUid) renderFicha(); })
+      return ObrasStore.cancelar(Number(b.dataset.cancelar)).then(function() { toast('Proposta cancelada'); renderAprovacoes(); recarregarGrade(); if (fichaUid || fichaMulti) renderFicha(); })
         .catch(function(err) { toast(err.message, true); });
     }
     if (b.dataset.abrirObra) { $('obrDlgAprov').close(); abaFicha = 'dados'; abrirFicha(b.dataset.abrirObra); }
@@ -1323,7 +1327,7 @@ var ObrasPainel = (function() {
   function exportar(acao) {
     if (!Acesso.podeExportar(ORIGEM)) { toast('A exportação não está liberada para o seu perfil nesta origem.', true); return; }
     if (!grade) return;
-    if (acao === 'caderno-filtro') { abrirCadernoRecorte(grade.getData('active').map(function(d) { return ObrasStore.obter(d.uid) || d; }), 'filtradas na tabela'); return; }
+    if (acao === 'caderno-filtro') { abrirCadernoRecorte(grade.getData('active').map(function(d) { return ObrasStore.obter(d.uid) || d; }), soMarcadas ? 'selecionadas na tabela' : 'filtradas na tabela'); return; }
     if (acao === 'historico') {
       if (!Acesso.podeExportarHistorico(ORIGEM)) { toast('O histórico de alterações é para quem edita ou aprova nesta origem.', true); return; }
       var origem = ORIGEM;
@@ -1418,7 +1422,7 @@ var ObrasPainel = (function() {
     $('obrConfirmar').addEventListener('click', confirmarSalvar);
     $('obrDescartar').addEventListener('click', function() {
       if (!confirm('Descartar ' + ObrasStore.totalPendentes() + ' alteração(ões) pendente(s)?')) return;
-      ObrasStore.descartar(); recarregarGrade(); if (fichaUid) renderFicha();
+      ObrasStore.descartar(); recarregarGrade(); if (fichaUid || fichaMulti) renderFicha();
     });
     $('obrStatus').addEventListener('click', recarregarDoBanco);
     $('obrExportar').addEventListener('click', function(e) {
@@ -1429,20 +1433,10 @@ var ObrasPainel = (function() {
       document.querySelectorAll('.jur-ui .menu-lista').forEach(function(x) { x.classList.remove('aberto'); });
       if (!aberto) m.classList.add('aberto');
     });
-    document.addEventListener('click', function() { $('obrMenuExportar').classList.remove('aberto'); $('obrMenuSelecao').classList.remove('aberto'); });
-    // Seleção de obras: menu, edição em lote
-    $('obrSelecao').addEventListener('click', function(e) {
-      e.stopPropagation();
-      var m = $('obrMenuSelecao'), aberto = m.classList.contains('aberto');
-      document.querySelectorAll('.jur-ui .menu-lista').forEach(function(x) { x.classList.remove('aberto'); });
-      if (!aberto) m.classList.add('aberto');
-    });
-    document.querySelectorAll('[data-obr-sel]').forEach(function(b) {
-      b.addEventListener('click', function(e) { e.stopPropagation(); acaoSelecao(b.dataset.obrSel); });
-    });
-    $('obrLoteCampo').addEventListener('change', entradaLote);
-    $('obrLoteVazio').addEventListener('change', entradaLote);
-    $('obrFormLote').addEventListener('submit', aplicarLote);
+    document.addEventListener('click', function() { $('obrMenuExportar').classList.remove('aberto'); });
+    // Seleção de obras: só as selecionadas; ficha das selecionadas (Editar atributos)
+    $('obrSelecao').addEventListener('click', alternarSoMarcadas);
+    $('obrEditarSel').addEventListener('click', function() { if (uidsMarcados().length) abrirFichaMulti(); });
     document.querySelectorAll('[data-obr-exp]').forEach(function(b) {
       b.addEventListener('click', function() { exportar(b.dataset.obrExp); });
     });

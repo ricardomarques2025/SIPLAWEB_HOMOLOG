@@ -114,6 +114,10 @@ function ehOrigemPlanilhaPge(origem) { return ORIGENS_PLANILHA_PGE.indexOf(Strin
 // Campos da tabela/ficha/exportação da origem: CAMPOS_OBRA (cópias) na ordem e com os títulos da planilha nas origens
 // do PGE; nas demais, o próprio CAMPOS_OBRA. planilha: true = coluna da planilha (visível por padrão);
 // soComValor: só aparece se a origem tem algum valor (SUBEIXO = Modalidade, só no PGE4).
+// Colunas que aparecem na tabela de uma origem mesmo ocultas por padrão (26/11/2026: DPL com fonte e valor do projeto).
+// Entram também na escolha de colunas já guardada no navegador (uma vez só: se a pessoa ocultar depois, fica oculta).
+var COLUNAS_EXTRAS_ORIGEM = { DPL: ['fonte', 'valor_projeto'] };
+
 function camposObraDaOrigem(origem) {
   if (!ehOrigemPlanilhaPge(origem)) return CAMPOS_OBRA;
   var porCampo = {};

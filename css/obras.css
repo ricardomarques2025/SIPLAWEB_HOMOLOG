@@ -116,3 +116,14 @@
 .obr-ui .aprov-lote-resultado { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: #fffbeb; color: #92400e; font-size: 12.5px; }
 .obr-ui .aprov-lote-resultado ul { margin: 4px 0 0 18px; padding: 0; }
 .obr-ui .aprov-marca { width: 16px; height: 16px; margin: 0 8px 0 0; vertical-align: -3px; cursor: pointer; accent-color: #1e9538; }
+/* O clique vai sempre para a célula (a caixa nativa não alterna sozinha e não desfaz a marcação). */
+.obr-ui .col-marca input, .obr-ui .obr-marca-todas { pointer-events: none; }
+.obr-ui .tabulator-cell.col-marca { cursor: pointer; }
+.obr-ui .tabulator-col.col-marca { cursor: pointer; }
+.obr-ui #obrEditarSel:disabled { opacity: .5; }
+/* Ficha das selecionadas ("Editar atributos") */
+.obr-ui .gaveta.multi .gaveta-abas, .obr-ui .gaveta.multi #obrExcluir, .obr-ui .gaveta.multi #obrPrancha, .obr-ui .gaveta.multi #obrVerMapa { display: none; }
+.obr-ui .obr-multi-nota { margin-bottom: 10px; padding: 8px 10px; border: 1px solid #bbf7d0; border-radius: var(--raio, 8px); background: #f0fdf4; color: #14532d; font-size: 12.5px; line-height: 1.45; }
+.obr-ui .obr-varios { font-style: normal; font-weight: 700; font-size: 10.5px; color: #b45309; background: #fef3c7; border-radius: 4px; padding: 0 5px; margin-left: 4px; text-transform: lowercase; }
+.obr-ui .campo.varios input::placeholder, .obr-ui .campo.varios textarea::placeholder { color: #b45309; font-style: italic; }
+.obr-ui .campo.varios select { color: #b45309; font-style: italic; }
