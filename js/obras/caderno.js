@@ -110,6 +110,8 @@
   const ESTILOS = [
     [/bueiro|oac/i, { contorno: '#c7f0ff', miolo: '#0891b2', fundo: '#dcefff' }, null],
     [/duplica|capacidade/i, { contorno: '#9fe2ff', miolo: '#0a6cff', fundo: '#d9e8ff' }, 'Duplicação'],
+    // Terceira Faixa (27/11/2026): azul escuro, perto da Duplicação (também amplia a capacidade)
+    [/terceira\s*faixa/i, { contorno: '#a9bdf0', miolo: '#1e3a8a', fundo: '#d6def2' }, 'Terceira Faixa'],
     [/ponte|oae|viaduto|passarela|passagem/i, { contorno: '#ffe0b3', miolo: '#b45309', fundo: '#ead4c0' }, null],
     [/paviment|implanta/i, { contorno: '#ffd1f5', miolo: '#c2189b', fundo: '#fae9fc' }, 'Pavimentação'],
     [/restaura|recupera|cbuq|micro/i, { contorno: '#b9ff9f', miolo: '#17b81a', fundo: '#e6f8db' }, 'Restauração'],

@@ -353,7 +353,7 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-27.01';
+  var VERSAO_SITE = '2026-11-27.02';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
@@ -363,7 +363,8 @@ var Acesso = (function() {
     ['3.23', '27/11/2026', [
       'Aeródromos atualizados pelo Despacho nº 997/2026/GOINFRA (SEI 98815184, 23/11/2026): os 24 aeródromos e o heliponto da GOINFRA com código, situação (operacional 24h, diurno, com restrição para jatos, fechado, em homologação…) e coordenadas do despacho. Mineiros (não homologado) entra como ponto novo, ao lado do aeródromo atual. Os demais aeródromos continuam como estavam.',
       'Heliponto GOINFRA no mapa, com símbolo próprio (H dentro de um círculo) e na legenda.',
-      'Botão "Aeródromos" no menu ORIGEM: liga e desliga os aeródromos; o ícone de tabela ao lado abre a lista do despacho (item, nome, tipo, código, situação e coordenadas), com busca, filtros, Excel e "Filtrar o mapa". O popup do aeródromo mostra a situação.'
+      'Botão "Aeródromos" no menu ORIGEM: liga e desliga os aeródromos; o ícone de tabela ao lado abre a lista do despacho (item, nome, tipo, código, situação e coordenadas), com busca, filtros, Excel e "Filtrar o mapa". O popup do aeródromo mostra a situação.',
+      'Intervenção nova "Terceira Faixa" (lista de valores), em azul escuro nos cadernos em PDF, com item próprio na legenda das obras lineares.'
     ], [
       'Os aeródromos foram atualizados pelo despacho da GOINFRA e o heliponto apareceu no mapa. No menu Origem há um botão "Aeródromos": o ícone de tabela abre a lista com código e situação de cada um.'
     ]],
