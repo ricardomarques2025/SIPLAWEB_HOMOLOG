@@ -353,7 +353,7 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-27.06';
+  var VERSAO_SITE = '2026-11-27.07';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
@@ -363,9 +363,11 @@ var Acesso = (function() {
     ['3.25', '27/11/2026', [
       'Obras do Fundeinfra concluídas ou inauguradas aparecem só no FUNDEINFRA: saem do mapa, do cartão da página inicial e do caderno da origem (DOR ou DPJ). Continuam na tabela de obras da origem, para editar, e no Painel.',
       'Caderno do FUNDEINFRA com os capítulos "Obras inauguradas (DOR)" e "Obras concluídas (DOR)"; elas saem de "Obras rodoviárias em andamento".',
-      'Barra do caderno completo sempre em duas linhas: em cima, Voltar, modos e Imprimir; embaixo, as opções (origens, seções, título, ano e Gerar caderno).'
+      'Barra do caderno completo sempre em duas linhas: em cima, Voltar, modos e Imprimir; embaixo, as opções (origens, seções, título, ano e Gerar caderno).',
+      'DPL: todas as obras na etapa Licitação; o que era etapa (Fase Preparatória, Publicado, Homologado, Termo Aditivo) virou status, e a legenda do mapa da DPL mostra intervenção + status.',
+      'Página inicial: faixa "Licitação" (laranja) nas barrinhas dos cartões.'
     ], [
-      'As obras do Fundeinfra concluídas e inauguradas agora aparecem só no FUNDEINFRA, com capítulos próprios no caderno.'
+      'As obras do Fundeinfra concluídas e inauguradas agora aparecem só no FUNDEINFRA. Na DPL, todas estão em licitação e a legenda mostra o status de cada uma. Os cartões da página inicial ganharam a faixa Licitação.'
     ]],
     ['3.24', '27/11/2026', [
       'Página inicial: nova faixa "Concluída" (roxa) nas barrinhas dos cartões das origens, com as obras de status Concluído ou Inaugurado, qualquer que seja a etapa. Ficam: Planejamento, Projeto, Obra, Concluída e Outras etapas. O número "em obra" do topo deixa de contar as concluídas.',

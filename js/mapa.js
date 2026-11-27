@@ -6097,6 +6097,10 @@ map.addControl(new LogoMapaControl());
     var estilo = estiloDor(dados);
     var etapa = String((dados && dados.ETAPA) || '').toLowerCase();
     if (ehEtapaPlanejamento(etapa)) estilo.tipo_linha = 'COM LINHA BRANCA TRACEJADA';
+    // DPL (27/11/2026): todas na etapa Licitação; a legenda separa pelo status (Fase Preparatória, Publicado,
+    // Homologado, Termo Aditivo): "Pavimentação - Publicado".
+    var status = String((dados && dados.STATUS) || '').trim();
+    if (status) estilo.legenda = ((dados && dados.INTERVENCAO) || 'Intervenção') + ' - ' + status;
     return estilo;
   }
 

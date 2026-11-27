@@ -20,7 +20,7 @@
       href: 'mapa.html?modulo=jurisdicao', area: 'JURISDICAO' },
     { nome: 'Gerência', desc: 'Quadros de demandas e assuntos da gerência', classe: 'atalho-gerencia', href: 'gerencia.html', area: 'GERENCIA' }
   ];
-  var ETAPAS = [['Planejamento', 'var(--plan)'], ['Projeto', 'var(--projeto)'], ['Obra', 'var(--obra)'], ['Concluída', 'var(--concluida)'], ['outros', 'var(--outros)']];
+  var ETAPAS = [['Planejamento', 'var(--plan)'], ['Projeto', 'var(--projeto)'], ['Licitação', 'var(--licitacao)'], ['Obra', 'var(--obra)'], ['Concluída', 'var(--concluida)'], ['outros', 'var(--outros)']];
   // Concluída (27/11/2026): status Concluído ou Inaugurado, em qualquer etapa (vale mais que a etapa).
   function concluida(o) { return /conclu|inaugur/i.test(o.STATUS || ''); }
   var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -69,7 +69,7 @@
   }).then(function(regs) {
     var porOrigem = {}, obra = 0, projeto = 0, atualizado = '';
     function contar(sigla, o) {
-      var x = porOrigem[sigla] = porOrigem[sigla] || { total: 0, Obra: 0, Projeto: 0, Planejamento: 0, 'Concluída': 0, outros: 0 };
+      var x = porOrigem[sigla] = porOrigem[sigla] || { total: 0, Obra: 0, Projeto: 0, Planejamento: 0, 'Licitação': 0, 'Concluída': 0, outros: 0 };
       x.total++;
       var e = concluida(o) ? 'Concluída' : o.ETAPA === 'Estudo Técnico Preliminar' || o.ETAPA === 'Indicação de Recurso' || o.ETAPA === 'Fase Preparatória' ? 'Planejamento' : o.ETAPA;   // ETP, Indicação de Recurso e Fase Preparatória contam como planejamento
       if (x[e] !== undefined) x[e]++; else x.outros++;
