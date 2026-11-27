@@ -2541,6 +2541,7 @@ map.addControl(new LogoMapaControl());
 
   // Obra pontual visível com as origens ligadas: a própria origem ou, se for do Fundeinfra, o botão FUNDEINFRA.
   function origemPontoAtiva(item) {
+    if (item && item.SO_FUNDEINFRA) return !!servicosAtivos.FUNDEINFRA;   // concluída/inaugurada: só no FUNDEINFRA
     return !!(servicosAtivos[origemObraPonto(item)] || (servicosAtivos.FUNDEINFRA && ehObraFundeinfra(item)) ||
       (servicosAtivos.TARE && item && item.FONTE_TARE));
   }
@@ -2548,6 +2549,7 @@ map.addControl(new LogoMapaControl());
   function registrosDadosPorUnidade(registros, unidade) {
     var unidadeNormalizada = String(unidade || '').trim().toUpperCase();
     return registros.filter(function(item) {
+      if (item && item.SO_FUNDEINFRA) return false;   // concluída/inaugurada Fundeinfra: só no FUNDEINFRA
       return origemNormalizadaObraPonto(item) === unidadeNormalizada;
     });
   }
@@ -10276,7 +10278,8 @@ map.addControl(new LogoMapaControl());
       if (!BASES_LINHA_OBRAS[vinculo.BASE]) return;
       var registro = registrosPorIdcod[String(vinculo.IDCOD)];
       if (!registro) return;
-      var linkField = LINK_FIELD_POR_UNIDADE[String(registro.UNIDADE || '').toUpperCase()];
+      // Concluída/inaugurada Fundeinfra (27/11/2026): só a ligação do FUNDEINFRA, não a da origem.
+      var linkField = registro.SO_FUNDEINFRA ? 'LINK_FUND' : LINK_FIELD_POR_UNIDADE[String(registro.UNIDADE || '').toUpperCase()];
       if (!linkField) return;
       var indice = baseIndices[vinculo.BASE];
       var baseFeature = indice && indice[String(vinculo.GEOCOD)];
@@ -10316,7 +10319,8 @@ map.addControl(new LogoMapaControl());
       if (vinculo.BASE !== 'aero') return;
       var registro = registrosPorIdcod[String(vinculo.IDCOD)];
       if (!registro) return;
-      var linkField = LINK_FIELD_POR_UNIDADE[String(registro.UNIDADE || '').toUpperCase()];
+      // Concluída/inaugurada Fundeinfra (27/11/2026): só a ligação do FUNDEINFRA, não a da origem.
+      var linkField = registro.SO_FUNDEINFRA ? 'LINK_FUND' : LINK_FIELD_POR_UNIDADE[String(registro.UNIDADE || '').toUpperCase()];
       if (!linkField) return;
       var aeroFeature = aeroIndice[String(vinculo.GEOCOD)];
       if (!aeroFeature || !aeroFeature.geometry) return;

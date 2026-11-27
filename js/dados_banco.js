@@ -92,6 +92,7 @@ var DadosBanco = (function() {
     return {
       FONTE_FUNDEINFRA: ehFonteFundeinfra(o),
       FONTE_TARE: Acesso.ehObraDoFiltro('TARE', o),
+      SO_FUNDEINFRA: Acesso.soNoFiltro(o),   // concluída/inaugurada: só no FUNDEINFRA, não na origem
       IDCOD: o.codigo,
       IDCOD_LEGADO: o.idcod_legado,
       IDGRUPO: o.grupo ? o.grupo.codigo : null,

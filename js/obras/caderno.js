@@ -20,6 +20,7 @@
   const fonte = re => o => re.test(o.fonte || '');
   const TESOURO = fonte(/^(tesouro|convênio)$/i);
   const modalidade = v => o => (o.modalidade || '') === v;
+  const CONCLUIDA = o => /conclu|inaugur/i.test(o.status || '');   // concluída ou inaugurada (27/11/2026)
   const CONFIG_ORIGEM = {
     DOR: {
       titulo: 'OBRAS RODOVIÁRIAS',
@@ -66,7 +67,7 @@
       fase: { titulo: 'FASE', valor: o => o.fase || String(o.modalidade || '').replace(/^Obra Integrada$/, 'Integrada') },
       trecho: 'TRECHO',
       capitulos: [
-        { titulo: 'OBRAS RODOVIÁRIAS EM ANDAMENTO (DOR)', filtro: o => o.origem_real === 'DOR' && o.etapa === 'Obra', secoes: [
+        { titulo: 'OBRAS RODOVIÁRIAS EM ANDAMENTO (DOR)', filtro: o => o.origem_real === 'DOR' && o.etapa === 'Obra' && !CONCLUIDA(o), secoes: [
           { titulo: 'FUNDEINFRA', filtro: fonte(/^fundeinfra$/i) },
           { titulo: 'IFAG', filtro: fonte(/associativo/i) }
         ] },
@@ -77,6 +78,13 @@
           { titulo: 'ETP - FUNDEINFRA', filtro: modalidade('ETP FUNDEINFRA') },
           { titulo: 'FUNDEINFRA', filtro: modalidade('FUNDEINFRA') },
           { titulo: 'LICITAÇÃO - FUNDEINFRA', filtro: modalidade('LICITAÇÃO FUNDEINFRA') }
+        ] },
+        // Inauguradas e concluídas (27/11/2026): só no FUNDEINFRA (Acesso.soNoFiltro), como na tabela da DOR de 27/11.
+        { titulo: 'OBRAS INAUGURADAS (DOR)', filtro: o => o.origem_real === 'DOR' && /inaugur/i.test(o.status || ''), secoes: [
+          { titulo: 'FUNDEINFRA', filtro: fonte(/fundeinfra/i) }
+        ] },
+        { titulo: 'OBRAS CONCLUÍDAS (DOR)', filtro: o => o.origem_real === 'DOR' && /conclu/i.test(o.status || ''), secoes: [
+          { titulo: 'FUNDEINFRA', filtro: fonte(/fundeinfra/i) }
         ] }
       ]
     },
@@ -178,6 +186,7 @@
   async function lerObras(origens) {
     const reais = origens.filter(c => !Acesso.ehFiltroFonte(c));
     let linhas = reais.length ? await lerPaginas(() => sb.from('obras').select(COLUNAS).in('origem', reais)) : [];
+    linhas = linhas.filter(o => !Acesso.soNoFiltro(o));   // Fundeinfra concluída/inaugurada: só no caderno FUNDEINFRA (27/11/2026)
     for (const filtro of origens.filter(c => Acesso.ehFiltroFonte(c))) {
       const F = Acesso.filtrosFonte[filtro];
       const doFiltro = await lerPaginas(() => sb.from('obras').select(COLUNAS).in('origem', F.origens).in('fonte', F.fontes));

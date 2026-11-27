@@ -75,7 +75,7 @@
       if (x[e] !== undefined) x[e]++; else x.outros++;
     }
     regs.forEach(function(o) {
-      contar(o.UNIDADE, o);
+      if (!o.SO_FUNDEINFRA) contar(o.UNIDADE, o);   // concluída/inaugurada Fundeinfra: só no cartão FUNDEINFRA
       // FUNDEINFRA e TARE são filtros (fonte do recurso): os cartões contam as obras da DOR e da DPJ com aquela fonte.
       if (o.FONTE_FUNDEINFRA) contar('FUNDEINFRA', o);
       if (o.FONTE_TARE) contar('TARE', o);
