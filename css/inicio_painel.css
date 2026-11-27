@@ -2,7 +2,7 @@
 :root {
   --verde: #1e9538; --verde-escuro: #12662a;
   --tinta: #0f2a1a; --texto: #334139; --suave: #6b7a70; --linha: #e3e9e5; --fundo: #f4f7f5;
-  --obra: #1e9538; --projeto: #2b7bd6; --plan: #e0a019; --outros: #b8c2bc;
+  --obra: #1e9538; --projeto: #2b7bd6; --plan: #e0a019; --concluida: #6d28d9; --outros: #b8c2bc;
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: Inter, Arial, sans-serif; background: var(--fundo); color: var(--texto); }

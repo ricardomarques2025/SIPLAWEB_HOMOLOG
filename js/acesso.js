@@ -353,13 +353,20 @@ var Acesso = (function() {
   // A cada publicação, VERSAO_SITE (aqui) e versao.json (raiz do site) recebem o MESMO valor novo. A página confere
   // versao.json sem cache ao abrir, a cada 5 minutos e quando a aba volta a ficar visível; se o publicado for outro,
   // mostra o aviso "Nova versão" (uma aba esquecida aberta continuava rodando o código antigo por dias).
-  var VERSAO_SITE = '2026-11-27.03';
+  var VERSAO_SITE = '2026-11-27.04';
   var conferidaEm = 0, avisoAdiadoAte = 0;
   // Versão que as pessoas veem (rodapé do mapa e Painel): sobe o número a cada mudança relevante, com a data e o que
   // mudou em NOVIDADES (a mais nova primeiro). Correção pequena troca só VERSAO_SITE.
   // 4º item (opcional) = BOAS-VINDAS: resumo curto, em linguagem simples (sem termos técnicos), mostrado uma vez por
   // navegador ao entrar no mapa ou no Painel depois de cada versão nova (número novo). Toda versão nova deve ter.
   var NOVIDADES = [
+    ['3.24', '27/11/2026', [
+      'Página inicial: nova faixa "Concluída" (roxa) nas barrinhas dos cartões das origens, com as obras de status Concluído ou Inaugurado, qualquer que seja a etapa. Ficam: Planejamento, Projeto, Obra, Concluída e Outras etapas. O número "em obra" do topo deixa de contar as concluídas.',
+      'Status novo "Inaugurado" na lista de valores.',
+      'As obras FUNDEINFRA inauguradas (3) e concluídas (14) estão na DOR com fonte Fundeinfra e aparecem no FUNDEINFRA.'
+    ], [
+      'Na página inicial, os cartões agora mostram também as obras concluídas (faixa roxa). As obras FUNDEINFRA concluídas e inauguradas voltaram para a DOR e aparecem no FUNDEINFRA.'
+    ]],
     ['3.23', '27/11/2026', [
       'Aeródromos atualizados pelo Despacho nº 997/2026/GOINFRA (SEI 98815184, 23/11/2026): os 24 aeródromos e o heliponto da GOINFRA com código, situação (operacional 24h, diurno, com restrição para jatos, fechado, em homologação…) e coordenadas do despacho. Mineiros (não homologado) entra como ponto novo, ao lado do aeródromo atual. Os demais aeródromos continuam como estavam.',
       'Heliponto GOINFRA no mapa, com símbolo próprio (H dentro de um círculo) e na legenda.',
