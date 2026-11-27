@@ -53,6 +53,11 @@ var CONFIG_AERO = {
   aeroporto: {
     tamanho: 30,
     icone: 'data/aeroporto.svg'
+  },
+  // Heliponto (27/11/2026): H dentro de um círculo
+  heliponto: {
+    tamanho: 22,
+    icone: 'data/heliponto.svg'
   }
 };
 
@@ -2894,10 +2899,7 @@ map.addControl(new LogoMapaControl());
     if (btnLocalidades) {
       btnLocalidades.classList.toggle('ativo-filtro', localidadeFiltroAtivo);
     }
-    var btnAero = document.getElementById('toggleAero');
-    if (btnAero) {
-      btnAero.classList.toggle('ativo-filtro', aeroFiltroAtivo);
-    }
+    sincronizarBotoesAero();
     var btnPedagios = document.getElementById('togglePedagios');
     if (btnPedagios) {
       btnPedagios.classList.toggle('ativo-filtro', pedagiosFiltroAtivo);
@@ -3043,6 +3045,14 @@ map.addControl(new LogoMapaControl());
   }
 
   // Tabela de atributos das camadas de referência (js/tabela_camadas.js): botão no popup e filtro "Filtrar o mapa".
+  // Os dois botões dos aeródromos (Camadas de referência e menu ORIGEM) acompanham aeroFiltroAtivo.
+  function sincronizarBotoesAero() {
+    ['toggleAero', 'origemAero'].forEach(function(id) {
+      var b = document.getElementById(id);
+      if (b) { b.classList.toggle('ativo-filtro', aeroFiltroAtivo); b.setAttribute('aria-pressed', aeroFiltroAtivo ? 'true' : 'false'); }
+    });
+  }
+
   function tcBotao(chave, feature) { return chave && window.TabelaCamadas ? TabelaCamadas.botao(chave, feature) : ''; }
   function tcPassa(chave, feature) { return !window.TabelaCamadas || TabelaCamadas.passa(chave, feature); }
   window.tcBotaoCamada = tcBotao;
@@ -4630,12 +4640,18 @@ map.addControl(new LogoMapaControl());
 
   function tipoAeroFeature(feature) {
     var tipo = String(valorSeguro(feature, 'TIPO') || '').toLowerCase();
+    if (tipo.indexOf('heliponto') >= 0) return 'heliponto';
     return tipo.indexOf('aeroporto') >= 0 ? 'aeroporto' : 'aerodromo';
   }
 
+  // Aeródromos do despacho da GOINFRA (Despacho nº 997/2026, 27/11/2026): têm ITEM; abrem a tabela "Aeródromos GOINFRA".
+  function aeroDoDespacho(feature) {
+    var item = feature && feature.properties && feature.properties.ITEM;
+    return item !== null && item !== undefined && item !== '';
+  }
+
   function criarIconeAero(tipo) {
-    var aeroporto = tipo === 'aeroporto';
-    var config = aeroporto ? CONFIG_AERO.aeroporto : CONFIG_AERO.aerodromo;
+    var config = CONFIG_AERO[tipo] || CONFIG_AERO.aerodromo;
     var tamanho = config.tamanho;
     var icone = config.icone;
     return L.divIcon({
@@ -4652,6 +4668,7 @@ map.addControl(new LogoMapaControl());
     var linhas = [
       ['Tipo', p.TIPO],
       ['Código', p.COD],
+      ['Situação', p.SITUACAO],
       ['Nome', p.NOME],
       ['Município', p.MUNICIPIO],
       ['Altitude', p.ALT_M ? p.ALT_M + ' m' : ''],
@@ -4664,7 +4681,7 @@ map.addControl(new LogoMapaControl());
       if (linhas[i][1] === null || linhas[i][1] === undefined || linhas[i][1] === '') continue;
       html += '<br><b>' + escaparHtml(linhas[i][0]) + ':</b> ' + escaparHtml(linhas[i][1]);
     }
-    return html + tcBotao('aero', feature);
+    return html + tcBotao(aeroDoDespacho(feature) ? 'aero_goinfra' : 'aero', feature);
   }
 
   function criarIconePedagio() {
@@ -4772,7 +4789,7 @@ map.addControl(new LogoMapaControl());
 
     aeroData.features.forEach(function(feature) {
       var coords = feature.geometry && feature.geometry.coordinates;
-      if (!coords || coords.length < 2 || !tcPassa('aero', feature)) return;
+      if (!coords || coords.length < 2 || !tcPassa('aero', feature) || !tcPassa('aero_goinfra', feature)) return;
 
       var tipo = tipoAeroFeature(feature);
       tiposVisiveis[tipo] = true;
@@ -4782,7 +4799,7 @@ map.addControl(new LogoMapaControl());
         pane: 'aeroPane',
         icon: criarIconeAero(tipo),
         title: valorSeguro(feature, 'NOME') || valorSeguro(feature, 'TIPO') || '',
-        zIndexOffset: tipo === 'aeroporto' ? 20 : 10
+        zIndexOffset: tipo === 'aeroporto' ? 20 : tipo === 'heliponto' ? 15 : 10
       });
 
       vincularPopupNoPonto(marker, construirPopupAero(feature));
@@ -4806,15 +4823,16 @@ map.addControl(new LogoMapaControl());
 
     [
       ['aerodromo', 'Aeródromo'],
-      ['aeroporto', 'Aeroporto']
+      ['aeroporto', 'Aeroporto'],
+      ['heliponto', 'Heliponto']
     ].forEach(function(item) {
       if (!tiposVisiveis[item[0]]) return;
       var div = document.createElement('div');
       div.className = 'legenda-item';
       div.setAttribute('data-leg', 'aero|' + item[0]);
       div.innerHTML =
-        '<span class="legenda-aero-simbolo"><img class="aero-simbolo" src="data/' +
-        (item[0] === 'aeroporto' ? 'aeroporto.svg' : 'aerodromo.svg') +
+        '<span class="legenda-aero-simbolo"><img class="aero-simbolo" src="' +
+        CONFIG_AERO[item[0]].icone +
         '" alt="" aria-hidden="true" /></span><div class="legenda-texto">' + item[1] + '</div>';
       alvo.appendChild(div);
     });
@@ -7838,6 +7856,7 @@ map.addControl(new LogoMapaControl());
   var CAMPOS_AERO_INFO = [
     { chave: 'COD', rotulo: 'Código' },
     { chave: 'TIPO', rotulo: 'Tipo' },
+    { chave: 'SITUACAO', rotulo: 'Situação' },
     { chave: 'NOME', rotulo: 'Nome' },
     { chave: 'MUNICIPIO', rotulo: 'Município' },
     { chave: 'COMP_M', rotulo: 'Comprimento' },
@@ -9131,8 +9150,7 @@ map.addControl(new LogoMapaControl());
     document.getElementById('toggleLocalidades').classList.remove('ativo-filtro');
     localidadeFiltroAtivo = false;
     aeroFiltroAtivo = false;
-    var btnAeroOff = document.getElementById('toggleAero');
-    if (btnAeroOff) btnAeroOff.classList.remove('ativo-filtro');
+    sincronizarBotoesAero();
     pedagiosFiltroAtivo = false;
     var btnPedagiosOff = document.getElementById('togglePedagios');
     if (btnPedagiosOff) btnPedagiosOff.classList.remove('ativo-filtro');
@@ -9263,8 +9281,7 @@ map.addControl(new LogoMapaControl());
     localidadeFiltroAtivo = true;
     document.getElementById('toggleLocalidades').classList.add('ativo-filtro');
     aeroFiltroAtivo = true;
-    var btnAeroOn = document.getElementById('toggleAero');
-    if (btnAeroOn) btnAeroOn.classList.add('ativo-filtro');
+    sincronizarBotoesAero();
     pedagiosFiltroAtivo = false;
     var btnPedagiosOn = document.getElementById('togglePedagios');
     if (btnPedagiosOn) btnPedagiosOn.classList.remove('ativo-filtro');
@@ -9829,6 +9846,26 @@ map.addControl(new LogoMapaControl());
     });
   }
 
+  // Botão "Aeródromos" do menu ORIGEM (27/11/2026): o mesmo liga/desliga da camada de referência; o ícone de tabela
+  // liga a camada e abre a tabela dos aeródromos e heliponto do despacho da GOINFRA (TabelaCamadas 'aero_goinfra').
+  var btnOrigemAero = document.getElementById('origemAero');
+  if (btnOrigemAero) {
+    btnOrigemAero.addEventListener('click', function(e) {
+      if (e.target.closest && e.target.closest('#origemAeroTabela')) {
+        if (!aeroFiltroAtivo) { aeroFiltroAtivo = true; atualizarBotoesBase(); desenharAero(); }
+        if (window.TabelaCamadas) TabelaCamadas.abrir('aero_goinfra', null);
+        return;
+      }
+      aeroFiltroAtivo = !aeroFiltroAtivo;
+      atualizarBotoesBase();
+      desenharAero();
+    });
+    var iconeTabelaAero = document.getElementById('origemAeroTabela');
+    if (iconeTabelaAero) iconeTabelaAero.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); iconeTabelaAero.click(); }
+    });
+  }
+
   var btnTogglePedagios = document.getElementById('togglePedagios');
   if (btnTogglePedagios) {
     btnTogglePedagios.addEventListener('click', function() {
@@ -10386,9 +10423,19 @@ map.addControl(new LogoMapaControl());
       TabelaCamadas.registrar(chave, { titulo: titulo, dados: dados, rotulos: rotulos || {}, ordem: ordem || [],
         ocultar: chave === 'sre_base' ? ['sre'] : [], ligar: function() { ligar(); atualizarBotoesBase(); }, redesenhar: redesenhar });
     }
-    reg('aero', 'Aeródromos', function() { return aeroData; }, function() { aeroFiltroAtivo = true; },
-      { TIPO: 'Tipo', COD: 'Código', NOME: 'Nome', MUNICIPIO: 'Município', ALT_M: 'Altitude (m)', COMP_M: 'Comprimento (m)', LARG_M: 'Largura (m)', REVESTIMENTO: 'Revestimento' },
-      ['NOME', 'TIPO', 'COD', 'MUNICIPIO', 'ALT_M', 'COMP_M', 'LARG_M', 'REVESTIMENTO']);
+    var ROTULOS_AERO = { ITEM: 'Item', TIPO: 'Tipo', COD: 'Código', NOME: 'Nome', SITUACAO: 'Situação', MUNICIPIO: 'Município',
+      LAT_GMS: 'Latitude (GMS)', LONG_GMS: 'Longitude (GMS)', LATITUDE: 'Latitude (DD)', LONGITUDE: 'Longitude (DD)',
+      ALT_M: 'Altitude (m)', COMP_M: 'Comprimento (m)', LARG_M: 'Largura (m)', REVESTIMENTO: 'Revestimento',
+      COD_ANTERIOR: 'Código anterior', FONTE: 'Fonte', GEOCOD: 'Código (base)' };
+    reg('aero', 'Aeródromos', function() { return aeroData; }, function() { aeroFiltroAtivo = true; }, ROTULOS_AERO,
+      ['NOME', 'TIPO', 'COD', 'SITUACAO', 'MUNICIPIO', 'ALT_M', 'COMP_M', 'LARG_M', 'REVESTIMENTO']);
+    // Tabela do botão "Aeródromos" do menu ORIGEM (27/11/2026): só os do despacho da GOINFRA, na ordem e com as colunas da planilha.
+    reg('aero_goinfra', 'Aeródromos e heliponto (GOINFRA)', function() {
+      var lista = ((aeroData && aeroData.features) || []).filter(aeroDoDespacho)
+        .sort(function(a, b) { return Number(a.properties.ITEM) - Number(b.properties.ITEM); });
+      return { type: 'FeatureCollection', features: lista };
+    }, function() { aeroFiltroAtivo = true; }, ROTULOS_AERO,
+      ['ITEM', 'NOME', 'TIPO', 'COD', 'SITUACAO', 'MUNICIPIO', 'LAT_GMS', 'LONG_GMS', 'LATITUDE', 'LONGITUDE']);
     reg('localidades', 'Localidades', function() { return localidadesData; }, function() { localidadeFiltroAtivo = true; },
       { NOME_ACEN: 'Nome', POPULACAO: 'População', NM_MUN: 'Município', RG_PLAN: 'Região de Planejamento' }, ['NOME_ACEN', 'NM_MUN', 'POPULACAO']);
     reg('municipios', 'Municípios', function() { return municipiosData; }, function() { municipioBaseFiltroAtivo = true; },

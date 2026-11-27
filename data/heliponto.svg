@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Heliponto (27/11/2026): H dentro de um círculo, no preto e branco dos ícones de aeródromo e aeroporto -->
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="44" fill="#ffffff" stroke="#000000" stroke-width="9"/>
+  <path d="M30 26h11v19h18V26h11v48H59V55H41v19H30z" fill="#000000"/>
+</svg>

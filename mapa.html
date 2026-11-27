@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="css/style.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/jurisdicao.css?v=2026-11-26.08" />
+  <link rel="stylesheet" href="css/style.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/jurisdicao.css?v=2026-11-27.01" />
   <!-- Tema do mapa: o novo (css/tema_novo.css) e o padrao. mapa.html?tema=antigo mostra o visual anterior e fica
        lembrado neste navegador; ?tema=novo volta ao padrao. -->
   <script>
@@ -24,14 +24,14 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
-  <link rel="stylesheet" href="css/tema_novo.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/jurisdicao_tabela.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/obras.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/previa_tracado.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/perfil_elevacao.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/tabela_camadas.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/linha_tempo.css?v=2026-11-26.08" />
-  <link rel="stylesheet" href="css/camadas_edicao.css?v=2026-11-26.08" />
+  <link rel="stylesheet" href="css/tema_novo.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/jurisdicao_tabela.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/obras.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/previa_tracado.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/perfil_elevacao.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/tabela_camadas.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/linha_tempo.css?v=2026-11-27.01" />
+  <link rel="stylesheet" href="css/camadas_edicao.css?v=2026-11-27.01" />
  </head>
 <body>
 <header id="topbar">
@@ -85,6 +85,12 @@
         <button class="filtro-btn servico-btn ativo-filtro" data-servico="PGE4" type="button"><span class="sigla-origem">PGE4</span><span class="nome-eixo">Eixo 4</span></button>
         <button class="filtro-btn servico-btn ativo-filtro" data-servico="GME" type="button"><span class="sigla-origem">GME</span><span class="nome-eixo">Eixo 5</span></button>
         <button class="filtro-btn servico-btn ativo-filtro" data-servico="GMK" type="button"><span class="sigla-origem">GMK</span><span class="nome-eixo">Eixo 6</span></button>
+        <div class="grupo-origens-titulo">Aeródromos e heliponto</div>
+        <!-- Aeródromos e heliponto da GOINFRA (27/11/2026): não é origem de obras; liga/desliga a camada e o ícone abre a tabela do despacho -->
+        <button class="filtro-btn origem-aero-btn ativo-filtro" id="origemAero" type="button" title="Liga/desliga os aeródromos no mapa. O ícone de tabela abre a lista do Despacho nº 997/2026 (aeródromos e heliponto da GOINFRA)">
+          <img class="origem-aero-simbolo" src="data/aerodromo.svg" alt="" aria-hidden="true" /><span class="origem-aero-texto">Aeródromos</span>
+          <span class="origem-aero-tabela" id="origemAeroTabela" role="button" tabindex="0" title="Abrir a tabela dos aeródromos e heliponto da GOINFRA" aria-label="Abrir a tabela dos aeródromos e heliponto da GOINFRA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M3 15h18M9 10v11"/></svg></span>
+        </button>
       </div>
       </div>
     </details>
@@ -573,7 +579,7 @@
       </div>
 
       <div class="bloco legenda-categoria" id="blocoLegendaAero" style="display: none;">
-        <div class="subtitulo">Aeródromos e Aeroportos</div>
+        <div class="subtitulo">Aeródromos, Aeroportos e Heliponto</div>
         <div id="legendaAero"></div>
       </div>
 
@@ -598,33 +604,33 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="js/acesso.js?v=2026-11-26.08"></script>
-<script src="js/dados_banco.js?v=2026-11-26.08"></script>
-<script src="js/estilos.js?v=2026-11-26.08"></script>
-<script src="js/tabela_camadas.js?v=2026-11-26.08"></script>
-<script src="js/historico_export.js?v=2026-11-26.08"></script>
-<script src="js/regioes.js?v=2026-11-26.08"></script>
-<script src="js/hidrografia.js?v=2026-11-26.08"></script>
-<script src="js/mapa.js?v=2026-11-26.08"></script>
-<script src="js/unidades_saude.js?v=2026-11-26.08"></script>
-<script src="js/filtro_cabecalho.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/config.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/indicadores.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/store.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/tabela.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/modulo.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/tracado.js?v=2026-11-26.08"></script>
-<script src="js/previa_tracado.js?v=2026-11-26.08"></script>
-<script src="js/perfil_elevacao.js?v=2026-11-26.08"></script>
-<script src="js/jurisdicao/painel.js?v=2026-11-26.08"></script>
-<script src="js/obras/config.js?v=2026-11-26.08"></script>
-<script src="js/obras/store.js?v=2026-11-26.08"></script>
-<script src="js/obras/tracado.js?v=2026-11-26.08"></script>
-<script src="js/obras/painel.js?v=2026-11-26.08"></script>
-<script src="js/linha_tempo.js?v=2026-11-26.08"></script>
-<script src="js/camadas_edicao.js?v=2026-11-26.08"></script>
-<script src="js/impressao.js?v=2026-11-26.08"></script>
-<script src="js/paineis.js?v=2026-11-26.08"></script>
+<script src="js/acesso.js?v=2026-11-27.01"></script>
+<script src="js/dados_banco.js?v=2026-11-27.01"></script>
+<script src="js/estilos.js?v=2026-11-27.01"></script>
+<script src="js/tabela_camadas.js?v=2026-11-27.01"></script>
+<script src="js/historico_export.js?v=2026-11-27.01"></script>
+<script src="js/regioes.js?v=2026-11-27.01"></script>
+<script src="js/hidrografia.js?v=2026-11-27.01"></script>
+<script src="js/mapa.js?v=2026-11-27.01"></script>
+<script src="js/unidades_saude.js?v=2026-11-27.01"></script>
+<script src="js/filtro_cabecalho.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/config.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/indicadores.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/store.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/tabela.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/modulo.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/tracado.js?v=2026-11-27.01"></script>
+<script src="js/previa_tracado.js?v=2026-11-27.01"></script>
+<script src="js/perfil_elevacao.js?v=2026-11-27.01"></script>
+<script src="js/jurisdicao/painel.js?v=2026-11-27.01"></script>
+<script src="js/obras/config.js?v=2026-11-27.01"></script>
+<script src="js/obras/store.js?v=2026-11-27.01"></script>
+<script src="js/obras/tracado.js?v=2026-11-27.01"></script>
+<script src="js/obras/painel.js?v=2026-11-27.01"></script>
+<script src="js/linha_tempo.js?v=2026-11-27.01"></script>
+<script src="js/camadas_edicao.js?v=2026-11-27.01"></script>
+<script src="js/impressao.js?v=2026-11-27.01"></script>
+<script src="js/paineis.js?v=2026-11-27.01"></script>
 
 </body>
 </html>
