@@ -6063,7 +6063,9 @@ map.addControl(new LogoMapaControl());
       var cor = '#666666';
       var tipoLinha = 'NORMAL';
 
-      if (servico.indexOf('pavimenta') >= 0) cor = '#dc0101';
+      // Terceira Faixa (27/11/2026): azul esverdeado escuro (também nos cadernos, js/obras/caderno.js)
+      if (servico.indexOf('terceira faixa') >= 0) cor = '#0e5f6b';
+      else if (servico.indexOf('pavimenta') >= 0) cor = '#dc0101';
       else if (servico.indexOf('duplica') >= 0) cor = '#001efe';
       else if (servico.indexOf('restaura') >= 0) cor = '#10a000';
       else if (servico.indexOf('revitaliza') >= 0) cor = '#7db0b4';
@@ -6117,7 +6119,8 @@ map.addControl(new LogoMapaControl());
     var etapa = String((dados && dados.ETAPA) || '').toLowerCase();
     var cor = '#666666';
 
-    if (servico.indexOf('pavimenta') >= 0) cor = '#dc0101';
+    if (servico.indexOf('terceira faixa') >= 0) cor = '#0e5f6b';
+    else if (servico.indexOf('pavimenta') >= 0) cor = '#dc0101';
     else if (servico.indexOf('duplica') >= 0) cor = '#001efe';
     else if (servico.indexOf('restaura') >= 0) cor = '#10a000';
     else if (servico.indexOf('melhoria') >= 0) cor = '#ff9601';
