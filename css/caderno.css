@@ -38,6 +38,10 @@ body {
 .barra-caderno .grupo-opcoes label, .barra-caderno .ano { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .barra-caderno .ano input { width: 64px; height: 28px; border: 1px solid #cfd4dc; border-radius: 6px; padding: 0 6px; font: inherit; }
 .barra-caderno .status { color: #8a93a3; }
+/* Caderno completo (27/11/2026): as opções vão sempre para uma 2ª linha inteira; na 1ª ficam Voltar, modos, status e,
+   à direita, usuário e Imprimir (antes a quebra variava com a largura e o Imprimir descia para uma 3ª linha). */
+.barra-caderno #opcoesCompleto { order: 10; flex: 1 1 100%; }
+.barra-caderno .status { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .barra-caderno .status.ok { color: #16a34a; font-weight: 600; }
 .barra-caderno .dica { color: #8a93a3; font-size: 12px; }
 .espaco { flex: 1; }
